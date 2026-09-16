@@ -39,7 +39,7 @@ const CASES = [
     status: '승인·종결',
     statusBg: colors.chip.greenBg,
     statusFg: colors.chip.greenFg,
-    title: '업무상 뇌출혈',
+    title: '소음성 난청',
     date: '2023.08.04',
     step: 5,
     progressColor: colors.success,
@@ -176,7 +176,11 @@ export default function CasesScreen() {
                 </Text>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => router.push('/case-detail')}
+                  onPress={() => {
+                    if (c.id === '2024-0312') router.push('/case-detail-0312');
+                    else if (c.id === '2023-0871') router.push('/case-detail-0871');
+                    else router.push('/case-detail');
+                  }}
                 >
                   <Text
                     className="text-[13px] text-primary font-bold"
