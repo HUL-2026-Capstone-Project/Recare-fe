@@ -74,6 +74,7 @@ export default function LoginScreen() {
       <TouchableOpacity
         className="mt-4 h-[52px] bg-primary rounded-xl items-center justify-center"
         activeOpacity={0.85}
+        onPress={() => router.replace('/(tabs)')}
       >
         <Text
           className="text-white text-base font-bold"
