@@ -19,7 +19,7 @@ const CASES = [
     status: '심사 중',
     statusBg: colors.chip.orangeBg,
     statusFg: colors.chip.orangeFg,
-    title: '산재 추가상병 요추염좌',
+    title: '요추 추간판 탈출증',
     date: '2024.01.15',
     step: 3,
     progressColor: colors.primary,
@@ -29,14 +29,14 @@ const CASES = [
     status: '접수 중',
     statusBg: colors.chip.blueBg,
     statusFg: colors.chip.blueFg,
-    title: '우측 어깨 골절',
+    title: '우측 손목 골절',
     date: '2023.11.22',
     step: 1,
     progressColor: colors.primary,
   },
   {
     id: '2023-0871',
-    status: '승인·종결',
+    status: '승인 · 종결',
     statusBg: colors.chip.greenBg,
     statusFg: colors.chip.greenFg,
     title: '소음성 난청',
@@ -54,8 +54,11 @@ export default function CasesScreen() {
     selectedFilter === '전체'
       ? CASES
       : selectedFilter === '진행 중'
-      ? CASES.filter(c => c.status !== '승인·종결')
-      : CASES.filter(c => c.status === '승인·종결');
+      ? CASES.filter(c => c.status !== '승인 · 종결')
+      : CASES.filter(c => c.status === '승인 · 종결');
+
+  // TODO: 사건 등록 화면 구현 후 연결
+  const handleRegisterCase = () => {};
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -67,6 +70,7 @@ export default function CasesScreen() {
         <TouchableOpacity
           className="h-9 px-3.5 rounded-full bg-primary flex-row items-center gap-1"
           activeOpacity={0.85}
+          onPress={handleRegisterCase}
         >
           <Image
             source={require('@/shared/assets/icons/plus-white.png')}
@@ -81,7 +85,7 @@ export default function CasesScreen() {
       <ScrollView
         className="flex-1 px-5"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 4, paddingBottom: 90 }}
+        contentContainerStyle={{ paddingTop: 14, paddingBottom: 96 }}
       >
         {/* 필터 칩 */}
         <View className="flex-row gap-1.5 mb-4">
@@ -92,15 +96,14 @@ export default function CasesScreen() {
                 key={f.key}
                 onPress={() => setSelectedFilter(f.key)}
                 activeOpacity={0.7}
-                className="flex-row items-center px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: active ? colors.text1 : colors.input }}
+                className="flex-row items-center justify-center px-3 rounded-full"
+                style={{ height: 24, backgroundColor: active ? colors.text1 : colors.input }}
               >
                 <Text
                   className="text-[12px] font-semibold"
                   style={{
                     color: active ? '#fff' : colors.text2,
                     letterSpacing: -0.2,
-                    lineHeight: 16,
                   }}
                 >
                   {f.key} {f.count}
@@ -115,11 +118,11 @@ export default function CasesScreen() {
           {filteredCases.map(c => (
             <View
               key={c.id}
-              className="bg-white rounded-2xl p-4"
-              style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 16, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
+              className="bg-white p-4"
+              style={{ borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 16, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
             >
               {/* 케이스 번호 + 상태 배지 */}
-              <View className="flex-row justify-between items-start mb-1.5">
+              <View className="flex-row justify-between items-start mb-3.5">
                 <Text
                   className="text-[11px] font-semibold"
                   style={{ color: colors.text3, letterSpacing: 0.3 }}
@@ -154,7 +157,7 @@ export default function CasesScreen() {
               </Text>
 
               {/* 프로그레스 바 */}
-              <View className="flex-row gap-1 mb-2.5">
+              <View className="flex-row gap-1 mb-3">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <View
                     key={i}
@@ -186,7 +189,7 @@ export default function CasesScreen() {
                     className="text-[13px] text-primary font-bold"
                     style={{ letterSpacing: -0.3 }}
                   >
-                    자세히보기 ›
+                    상세보기 ›
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -199,6 +202,7 @@ export default function CasesScreen() {
       <TouchableOpacity
         className="absolute rounded-full bg-primary items-center justify-center"
         activeOpacity={0.85}
+        onPress={handleRegisterCase}
         style={{
           width: 56,
           height: 56,
