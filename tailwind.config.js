@@ -1,12 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 
-// constants/colors.ts와 동일한 값을 유지합니다.
-// className 기반 스타일은 여기서, prop 직접 전달은 constants/colors.ts에서 import해서 사용하세요.
+// shared/constants/colors.ts와 동일한 값을 유지합니다.
+// className 기반 스타일은 여기서, prop 직접 전달은 shared/constants/colors.ts에서 import해서 사용하세요.
 
 module.exports = {
   content: [
-    './app/**/*.{js,jsx,ts,tsx}',
-    './components/**/*.{js,jsx,ts,tsx}',
+    './src/**/*.{js,jsx,ts,tsx}',
   ],
   presets: [require('nativewind/preset')],
   theme: {
