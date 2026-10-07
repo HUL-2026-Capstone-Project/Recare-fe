@@ -2,10 +2,20 @@ import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
+import { useChatStore } from '@/store/chatStore';
 import { PlusIcon, SendButtonIcon } from './icons';
 
 export function ChatInputBar() {
   const [value, setValue] = useState('');
+  const send = useChatStore((state) => state.send);
+  const isSending = useChatStore((state) => state.isSending);
+
+  const handleSend = () => {
+    if (isSending || !value.trim()) return;
+    const question = value;
+    setValue('');
+    send(question);
+  };
 
   return (
     <View
@@ -38,8 +48,7 @@ export function ChatInputBar() {
       />
 
       <Pressable
-        // 전송 동작(AI/API 연동)이 범위 밖이라 스텁 처리 (TODO)
-        onPress={() => {}}
+        onPress={handleSend}
         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}
       >
         <SendButtonIcon size={18} />

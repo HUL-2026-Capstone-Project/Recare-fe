@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import type { ChatMessage, ChatQuickReply } from '../mocks';
@@ -47,14 +48,54 @@ function BotMessage({ text }: { text: string }) {
   );
 }
 
-function QuickReplies({ items }: { items: ChatQuickReply[] }) {
+function PendingDot({ delay }: { delay: number }) {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 300, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [delay, opacity]);
+
+  return <Animated.View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff', opacity }} />;
+}
+
+function PendingMessage() {
+  return (
+    <View className="flex-row items-end" style={{ gap: 8 }}>
+      <ChatbotAvatar size={32} />
+      <View
+        style={{
+          backgroundColor: colors.primary,
+          paddingVertical: 14,
+          paddingHorizontal: 16,
+          borderRadius: 16,
+          borderBottomLeftRadius: 4,
+          flexDirection: 'row',
+          gap: 4,
+        }}
+      >
+        <PendingDot delay={0} />
+        <PendingDot delay={150} />
+        <PendingDot delay={300} />
+      </View>
+    </View>
+  );
+}
+
+function QuickReplies({ items, onSelect }: { items: ChatQuickReply[]; onSelect: (label: string) => void }) {
   return (
     <View style={{ gap: 8, alignItems: 'flex-start', paddingLeft: 40 }}>
       {items.map((item) => (
         <Pressable
           key={item.id}
-          // 빠른 답변 전송 동작이 시안에 없어 스텁 처리 (TODO)
-          onPress={() => {}}
+          onPress={() => onSelect(item.label)}
           style={{
             height: 40,
             paddingHorizontal: 16,
@@ -104,14 +145,22 @@ function UserMessage({ text }: { text: string }) {
   );
 }
 
-export function MessageBubble({ message }: { message: ChatMessage }) {
+export function MessageBubble({
+  message,
+  onQuickReply,
+}: {
+  message: ChatMessage;
+  onQuickReply: (label: string) => void;
+}) {
   switch (message.type) {
     case 'date':
       return <DateDivider text={message.text} />;
     case 'bot':
       return <BotMessage text={message.text} />;
+    case 'pending':
+      return <PendingMessage />;
     case 'quickReplies':
-      return <QuickReplies items={message.items} />;
+      return <QuickReplies items={message.items} onSelect={onQuickReply} />;
     case 'user':
       return <UserMessage text={message.text} />;
   }
