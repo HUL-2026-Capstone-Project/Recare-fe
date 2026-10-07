@@ -59,6 +59,7 @@ export default function HomeScreen() {
                 description={claim.description}
                 badgeLabel={claim.badgeLabel}
                 variant={claim.variant}
+                onPress={claim.id === 'absence-benefit' ? () => router.push('/calculator') : undefined}
               />
             ))}
           </View>

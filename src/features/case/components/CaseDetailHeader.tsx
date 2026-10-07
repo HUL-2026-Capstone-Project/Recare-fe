@@ -3,7 +3,12 @@ import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 
-export function CaseDetailHeader({ showChevronDown = false }: { showChevronDown?: boolean }) {
+type CaseDetailHeaderProps = {
+  title?: string;
+  showChevronDown?: boolean;
+};
+
+export function CaseDetailHeader({ title = '케이스 상세', showChevronDown = false }: CaseDetailHeaderProps) {
   return (
     <View
       className="h-[52px] px-3 flex-row items-center justify-between bg-white"
@@ -23,7 +28,7 @@ export function CaseDetailHeader({ showChevronDown = false }: { showChevronDown?
         className="text-[17px] font-bold text-text1"
         style={{ letterSpacing: -0.3 }}
       >
-        케이스 상세
+        {title}
       </Text>
       {showChevronDown ? (
         <TouchableOpacity
