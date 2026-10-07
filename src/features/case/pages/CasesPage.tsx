@@ -179,11 +179,7 @@ export default function CasesScreen() {
                 </Text>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => {
-                    if (c.id === '2024-0312') router.push('/case-detail-0312');
-                    else if (c.id === '2023-0871') router.push('/case-detail-0871');
-                    else router.push('/case-detail');
-                  }}
+                  onPress={() => router.push(`/case-detail/${c.id}`)}
                 >
                   <Text
                     className="text-[13px] text-primary font-bold"

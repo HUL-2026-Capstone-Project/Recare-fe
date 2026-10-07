@@ -9,9 +9,9 @@ export function TimelineDot({ state }: { state: StepState }) {
     return (
       <View
         style={{
-          width: 20,
-          height: 20,
-          borderRadius: 10,
+          width: 14,
+          height: 14,
+          borderRadius: 7,
           backgroundColor: colors.success,
           alignItems: 'center',
           justifyContent: 'center',
@@ -19,7 +19,7 @@ export function TimelineDot({ state }: { state: StepState }) {
       >
         <Image
           source={require('@/shared/assets/icons/check-timeline.png')}
-          style={{ width: 10, height: 10, tintColor: '#fff' }}
+          style={{ width: 8, height: 8, tintColor: '#fff' }}
         />
       </View>
     );
@@ -28,9 +28,9 @@ export function TimelineDot({ state }: { state: StepState }) {
     return (
       <View
         style={{
-          width: 28,
-          height: 28,
-          borderRadius: 14,
+          width: 24,
+          height: 24,
+          borderRadius: 12,
           backgroundColor: colors.primaryLight,
           alignItems: 'center',
           justifyContent: 'center',
@@ -45,9 +45,9 @@ export function TimelineDot({ state }: { state: StepState }) {
   return (
     <View
       style={{
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
         backgroundColor: '#fff',
         borderWidth: 2,
         borderColor: colors.border,
