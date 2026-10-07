@@ -4,6 +4,7 @@ import { authApi } from '@/api/authApi';
 import type { ApiError } from '@/api/types';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { setForceLogoutHandler } from './authEvents';
+import { useChatStore } from './chatStore';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -55,6 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // 서버 로그아웃 실패 여부와 무관하게 로컬 로그아웃은 진행한다.
     } finally {
       await tokenStorage.clear();
+      useChatStore.getState().reset();
       set({ status: 'unauthenticated' });
     }
   },
