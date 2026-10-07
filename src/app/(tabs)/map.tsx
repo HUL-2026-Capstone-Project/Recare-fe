@@ -1,1 +1,1 @@
-export { default } from '@/features/home/pages/MapPage';
+export { default } from '@/features/map/pages/MapPage';
