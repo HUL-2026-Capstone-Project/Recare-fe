@@ -33,9 +33,7 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="case-detail" options={{ headerShown: false }} />
-        <Stack.Screen name="case-detail-0312" options={{ headerShown: false }} />
-        <Stack.Screen name="case-detail-0871" options={{ headerShown: false }} />
+        <Stack.Screen name="case-detail/[id]" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

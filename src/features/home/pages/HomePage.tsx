@@ -45,6 +45,7 @@ export default function HomeScreen() {
             subtitle={homeMock.activeCase.subtitle}
             currentStep={homeMock.activeCase.currentStep}
             totalSteps={homeMock.activeCase.totalSteps}
+            onPressDetail={() => router.push(`/case-detail/${homeMock.activeCase.caseNumber}`)}
           />
         </View>
 
