@@ -1,4 +1,5 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
 
 export function Header() {
   return (
@@ -11,7 +12,7 @@ export function Header() {
           care
         </Text>
       </View>
-      <TouchableOpacity activeOpacity={0.7}>
+      <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/notifications')}>
         <Image
           source={require('@/shared/assets/icons/bell-badge.png')}
           style={{ width: 28, height: 28 }}

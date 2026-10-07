@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { ProfileCard } from '../components/ProfileCard';
@@ -25,7 +26,12 @@ export default function MyPage() {
         contentContainerStyle={{ flexGrow: 1, paddingTop: 4, paddingHorizontal: 20, paddingBottom: 24 }}
       >
         <ProfileCard name={myMock.user.name} phone={myMock.user.phone} email={myMock.user.email} />
-        <StatsRow stats={myMock.stats} />
+        <StatsRow
+          stats={myMock.stats.map((stat) => ({
+            ...stat,
+            onPress: stat.id === 'notifications' ? () => router.push('/notifications') : undefined,
+          }))}
+        />
         <AccountMenuCard items={myMock.accountMenu} />
         <PolicyMenuCard items={myMock.policyMenu} />
 
