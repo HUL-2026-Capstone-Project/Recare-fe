@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 
@@ -6,9 +7,10 @@ import { colors } from '@/shared/constants/colors';
 type CaseDetailHeaderProps = {
   title?: string;
   showChevronDown?: boolean;
+  right?: ReactNode;
 };
 
-export function CaseDetailHeader({ title = '케이스 상세', showChevronDown = false }: CaseDetailHeaderProps) {
+export function CaseDetailHeader({ title = '케이스 상세', showChevronDown = false, right }: CaseDetailHeaderProps) {
   return (
     <View
       className="h-[52px] px-3 flex-row items-center justify-between bg-white"
@@ -30,7 +32,9 @@ export function CaseDetailHeader({ title = '케이스 상세', showChevronDown =
       >
         {title}
       </Text>
-      {showChevronDown ? (
+      {right ? (
+        <View style={{ paddingRight: 8 }}>{right}</View>
+      ) : showChevronDown ? (
         <TouchableOpacity
           className="w-10 items-center justify-center"
           activeOpacity={0.7}

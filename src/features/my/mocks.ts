@@ -7,9 +7,9 @@ export const myMock = {
     email: 'hyungjin@recare.kr',
   },
   stats: [
-    { value: '3', label: '진행 케이스' },
-    { value: '12', label: '제출 서류' },
-    { value: '5', label: '받은 알림' },
+    { id: 'cases' as const, value: '3', label: '진행 케이스' },
+    { id: 'documents' as const, value: '12', label: '제출 서류' },
+    { id: 'notifications' as const, value: '5', label: '받은 알림' },
   ],
   accountMenu: [
     { label: '프로필 정보 수정', icon: 'user' as const },
