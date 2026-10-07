@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { useAuthStore } from '@/store/authStore';
 import { ProfileCard } from '../components/ProfileCard';
 import { StatsRow } from '../components/StatsRow';
 import { AccountMenuCard } from '../components/AccountMenuCard';
@@ -11,6 +12,7 @@ import { APP_VERSION, myMock } from '../mocks';
 
 export default function MyPage() {
   const { top } = useSafeAreaInsets();
+  const logout = useAuthStore((state) => state.logout);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -37,8 +39,8 @@ export default function MyPage() {
 
         <View className="flex-row items-center justify-center" style={{ paddingTop: 8, paddingBottom: 4 }}>
           <Pressable
-            // 로그아웃 확인 모달이 시안에 없어 스텁 처리 (TODO), 기존 인증 로직 연결하지 않음
-            onPress={() => {}}
+            // 로그아웃 확인 모달이 시안에 없어 스텁 처리 (TODO)
+            onPress={() => logout()}
             style={{ paddingHorizontal: 14 }}
           >
             <Text style={{ fontSize: 12, fontWeight: '500', color: colors.text2, letterSpacing: -0.3 }}>

@@ -1,13 +1,34 @@
 import { useState } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { useAuthStore } from '@/store/authStore';
+import { getErrorMessage } from '@/api/errorMessage';
+import type { ApiError } from '@/api/types';
 
 export default function LoginScreen() {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [loginId, setLoginId] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const login = useAuthStore((state) => state.login);
   const { top } = useSafeAreaInsets();
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setErrorMessage(null);
+    setIsSubmitting(true);
+    try {
+      await login(loginId, password);
+    } catch (e) {
+      setErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-white px-5">
@@ -44,6 +65,8 @@ export default function LoginScreen() {
           placeholderTextColor={colors.text3}
           autoCapitalize="none"
           autoCorrect={false}
+          value={loginId}
+          onChangeText={setLoginId}
           style={{ letterSpacing: -0.3 }}
         />
 
@@ -56,6 +79,8 @@ export default function LoginScreen() {
             secureTextEntry={!passwordVisible}
             autoCapitalize="none"
             autoCorrect={false}
+            value={password}
+            onChangeText={setPassword}
             style={{ letterSpacing: -0.3 }}
           />
           <TouchableOpacity
@@ -68,20 +93,32 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
+
+        {errorMessage ? (
+          <Text className="text-danger text-[13px]" style={{ letterSpacing: -0.2 }}>
+            {errorMessage}
+          </Text>
+        ) : null}
       </View>
 
       {/* 로그인 버튼 */}
       <TouchableOpacity
         className="mt-4 h-[52px] bg-primary rounded-xl items-center justify-center"
         activeOpacity={0.85}
-        onPress={() => router.replace('/(tabs)')}
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        style={{ opacity: isSubmitting ? 0.7 : 1 }}
       >
-        <Text
-          className="text-white text-base font-bold"
-          style={{ letterSpacing: -0.3 }}
-        >
-          로그인
-        </Text>
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text
+            className="text-white text-base font-bold"
+            style={{ letterSpacing: -0.3 }}
+          >
+            로그인
+          </Text>
+        )}
       </TouchableOpacity>
 
       {/* 하단 링크: 아이디 찾기 | 비밀번호 찾기 | 회원가입 */}
