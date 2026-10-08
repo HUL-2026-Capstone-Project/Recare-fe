@@ -1,18 +1,35 @@
+import { useEffect, useRef } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import type { Hospital } from '../mocks';
 import { HospitalCard } from './HospitalCard';
 
+const CARD_WIDTH = 260;
+const CARD_GAP = 10;
+
 export function MapBottomSheet({
   hospitals,
   radius,
   total,
+  selectedId,
+  onSelectCard,
 }: {
   hospitals: Hospital[];
   radius: string;
   total: number;
+  selectedId: string;
+  onSelectCard: (id: string) => void;
 }) {
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const index = hospitals.findIndex((h) => h.id === selectedId);
+    if (index >= 0) {
+      scrollRef.current?.scrollTo({ x: index * (CARD_WIDTH + CARD_GAP), animated: true });
+    }
+  }, [selectedId, hospitals]);
+
   return (
     <View
       style={{
@@ -43,12 +60,18 @@ export function MapBottomSheet({
       </View>
 
       <ScrollView
+        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 18 }}
+        contentContainerStyle={{ gap: CARD_GAP, paddingHorizontal: 20, paddingBottom: 18 }}
       >
         {hospitals.map((hospital) => (
-          <HospitalCard key={hospital.id} hospital={hospital} />
+          <HospitalCard
+            key={hospital.id}
+            hospital={hospital}
+            active={hospital.id === selectedId}
+            onPress={() => onSelectCard(hospital.id)}
+          />
         ))}
       </ScrollView>
     </View>

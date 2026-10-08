@@ -4,11 +4,18 @@ import { colors } from '@/shared/constants/colors';
 import type { Hospital } from '../mocks';
 import { PhoneIcon } from './icons';
 
-export function HospitalCard({ hospital }: { hospital: Hospital }) {
-  const { active } = hospital;
-
+export function HospitalCard({
+  hospital,
+  active,
+  onPress,
+}: {
+  hospital: Hospital;
+  active: boolean;
+  onPress: () => void;
+}) {
   return (
-    <View
+    <Pressable
+      onPress={onPress}
       style={{
         width: 260,
         borderRadius: 14,
@@ -73,6 +80,6 @@ export function HospitalCard({ hospital }: { hospital: Hospital }) {
           <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff', letterSpacing: -0.2 }}>길찾기</Text>
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 }
