@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
 import { ProfileCard } from '../components/ProfileCard';
 import { StatsRow } from '../components/StatsRow';
 import { AccountMenuCard } from '../components/AccountMenuCard';
@@ -13,6 +15,12 @@ import { APP_VERSION, myMock } from '../mocks';
 export default function MyPage() {
   const { top } = useSafeAreaInsets();
   const logout = useAuthStore((state) => state.logout);
+  const profile = useProfileStore((state) => state.profile);
+  const fetchProfile = useProfileStore((state) => state.fetchProfile);
+
+  useEffect(() => {
+    if (!profile) fetchProfile();
+  }, [profile, fetchProfile]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -28,9 +36,9 @@ export default function MyPage() {
         contentContainerStyle={{ flexGrow: 1, paddingTop: 4, paddingHorizontal: 20, paddingBottom: 24 }}
       >
         <ProfileCard
-          name={myMock.user.name}
-          phone={myMock.user.phone}
-          email={myMock.user.email}
+          name={profile?.name ?? ''}
+          phone={profile?.phone ?? ''}
+          email={profile?.email ?? ''}
           onPress={() => router.push('/profile')}
         />
         <StatsRow
