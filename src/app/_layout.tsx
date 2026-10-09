@@ -53,6 +53,7 @@ function RootLayoutNav() {
         <Stack.Screen name="case-detail/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="calculator" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="profile" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );
