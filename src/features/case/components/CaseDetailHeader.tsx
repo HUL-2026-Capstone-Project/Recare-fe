@@ -8,13 +8,23 @@ type CaseDetailHeaderProps = {
   title?: string;
   showChevronDown?: boolean;
   right?: ReactNode;
+  transparent?: boolean;
 };
 
-export function CaseDetailHeader({ title = '케이스 상세', showChevronDown = false, right }: CaseDetailHeaderProps) {
+export function CaseDetailHeader({
+  title = '케이스 상세',
+  showChevronDown = false,
+  right,
+  transparent = false,
+}: CaseDetailHeaderProps) {
   return (
     <View
-      className="h-[52px] px-3 flex-row items-center justify-between bg-white"
-      style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
+      className="h-[52px] px-3 flex-row items-center justify-between"
+      style={{
+        backgroundColor: transparent ? colors.bg : colors.surface,
+        borderBottomWidth: transparent ? 0 : 1,
+        borderBottomColor: colors.border,
+      }}
     >
       <TouchableOpacity
         className="w-10 items-center justify-center"

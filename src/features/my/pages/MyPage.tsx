@@ -27,7 +27,12 @@ export default function MyPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingTop: 4, paddingHorizontal: 20, paddingBottom: 24 }}
       >
-        <ProfileCard name={myMock.user.name} phone={myMock.user.phone} email={myMock.user.email} />
+        <ProfileCard
+          name={myMock.user.name}
+          phone={myMock.user.phone}
+          email={myMock.user.email}
+          onPress={() => router.push('/profile')}
+        />
         <StatsRow
           stats={myMock.stats.map((stat) => ({
             ...stat,

@@ -1,11 +1,22 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { colors } from '@/shared/constants/colors';
 import { ChevronRightWhite } from './icons';
 
-export function ProfileCard({ name, phone, email }: { name: string; phone: string; email: string }) {
+export function ProfileCard({
+  name,
+  phone,
+  email,
+  onPress,
+}: {
+  name: string;
+  phone: string;
+  email: string;
+  onPress: () => void;
+}) {
   return (
+    <Pressable onPress={onPress}>
     <LinearGradient
       colors={[colors.primary, colors.primaryDark]}
       start={{ x: 0, y: 0 }}
@@ -63,5 +74,6 @@ export function ProfileCard({ name, phone, email }: { name: string; phone: strin
 
       <ChevronRightWhite size={20} />
     </LinearGradient>
+    </Pressable>
   );
 }
