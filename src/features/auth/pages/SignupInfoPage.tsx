@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -8,13 +8,18 @@ import { colors } from '@/shared/constants/colors';
 const CARRIERS = ['SKT', 'KT', 'LG U+', '알뜰폰'] as const;
 type Carrier = (typeof CARRIERS)[number];
 
-const FIELD_LABELS: Record<string, string> = {
-  name: '이름',
-  userId: '아이디',
-  password: '비밀번호',
-  residentNumber: '주민등록번호 앞 6자리',
-  phoneVerified: '휴대폰 인증',
-};
+// 주민등록번호 앞 6자리의 월/일 범위만 확인(실제 달력 검증은 아님). 스펙에서 명시한 수준으로만 검사.
+function isResidentFrontValid(front: string) {
+  if (!/^\d{6}$/.test(front)) return false;
+  const month = Number(front.slice(2, 4));
+  const day = Number(front.slice(4, 6));
+  return month >= 1 && month <= 12 && day >= 1 && day <= 31;
+}
+
+// 스웨거 SignUpRequest.residentGenderDigit pattern은 ^[0-9]$ — 범위 제한이 없어 숫자 1자리만 확인한다.
+function isResidentBackValid(back: string) {
+  return /^\d$/.test(back);
+}
 
 export default function SignUpInfoScreen() {
   const { top } = useSafeAreaInsets();
@@ -25,11 +30,17 @@ export default function SignUpInfoScreen() {
   const [name, setName] = useState('');
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [residentNumber, setResidentNumber] = useState('');
+  const [residentFront, setResidentFront] = useState('');
+  const [residentBack, setResidentBack] = useState('');
+  const [residentBackFocused, setResidentBackFocused] = useState(false);
+  const [showResidentError, setShowResidentError] = useState(false);
+  const residentBackRef = useRef<TextInput>(null);
   const [phone, setPhone] = useState('');
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+
+  const isResidentValid = isResidentFrontValid(residentFront) && isResidentBackValid(residentBack);
 
   useEffect(() => {
     if (!timerActive) return;
@@ -54,12 +65,39 @@ export default function SignUpInfoScreen() {
     setPhoneVerified(false);
   };
 
+  const handleChangeResidentFront = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 6);
+    setResidentFront(digits);
+    if (digits.length === 6) {
+      residentBackRef.current?.focus();
+    }
+  };
+
+  const handleChangeResidentBack = (text: string) => {
+    setResidentBack(text.replace(/\D/g, '').slice(0, 1));
+  };
+
+  const handleResidentBackBlur = () => {
+    setResidentBackFocused(false);
+    if (!isResidentValid) {
+      setShowResidentError(true);
+    }
+  };
+
   const handleNext = () => {
     const missing: string[] = [];
     if (!name.trim()) missing.push('이름');
     if (!userId.trim()) missing.push('아이디');
     if (!password.trim()) missing.push('비밀번호');
-    if (residentNumber.length < 6) missing.push('주민등록번호 앞 6자리');
+
+    const residentComplete = residentFront.length === 6 && residentBack.length === 1;
+    if (!residentComplete) {
+      missing.push('주민등록번호');
+    } else if (!isResidentValid) {
+      setShowResidentError(true);
+      return;
+    }
+
     if (!phoneVerified) missing.push('휴대폰 인증');
 
     if (missing.length > 0) {
@@ -152,30 +190,67 @@ export default function SignUpInfoScreen() {
             />
 
             {/* 주민등록번호 */}
-            <View className="flex-row gap-2">
-              <View className="flex-1">
+            <View>
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1">
+                  <TextInput
+                    className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+                    placeholder="생년월일 6자리"
+                    placeholderTextColor={colors.text3}
+                    value={residentFront}
+                    onChangeText={handleChangeResidentFront}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    style={{
+                      letterSpacing: -0.3,
+                      borderWidth: showResidentError && !isResidentValid ? 1.5 : 0,
+                      borderColor: colors.danger,
+                    }}
+                  />
+                </View>
+                <Text className="text-text3 font-semibold text-[18px]">-</Text>
                 <TextInput
-                  className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
-                  placeholder="주민등록번호 앞 6자리"
+                  ref={residentBackRef}
+                  className="rounded-xl text-[15px] text-text1 text-center"
+                  placeholder="0"
                   placeholderTextColor={colors.text3}
-                  value={residentNumber}
-                  onChangeText={setResidentNumber}
+                  value={residentBack}
+                  onChangeText={handleChangeResidentBack}
+                  onFocus={() => setResidentBackFocused(true)}
+                  onBlur={handleResidentBackBlur}
                   keyboardType="number-pad"
-                  maxLength={6}
-                  style={{ letterSpacing: -0.3 }}
+                  maxLength={1}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    letterSpacing: -0.3,
+                    backgroundColor: residentBackFocused ? '#fff' : colors.input,
+                    borderWidth: residentBackFocused || (showResidentError && !isResidentValid) ? 1.5 : 0,
+                    borderColor: showResidentError && !isResidentValid ? colors.danger : colors.primary,
+                  }}
                 />
-              </View>
-              <View
-                className="bg-input rounded-xl items-center justify-center"
-                style={{ width: 52, height: 52 }}
-              >
-                <Text
-                  className="text-text1 font-bold text-[18px]"
-                  style={{ letterSpacing: 2 }}
+                <View
+                  className="rounded-xl items-center justify-center"
+                  style={{ height: 52, paddingHorizontal: 14, backgroundColor: colors.input }}
                 >
-                  •••
-                </Text>
+                  <Text style={{ fontSize: 10, letterSpacing: 3, color: colors.text3 }}>
+                    ●●●●●●
+                  </Text>
+                </View>
               </View>
+              <Text
+                style={{
+                  marginTop: 8,
+                  fontSize: 12,
+                  letterSpacing: -0.2,
+                  color: showResidentError && !isResidentValid ? colors.danger : colors.text3,
+                  fontWeight: showResidentError && !isResidentValid ? '500' : '400',
+                }}
+              >
+                {showResidentError && !isResidentValid
+                  ? '주민등록번호를 확인해 주세요'
+                  : '성별 확인을 위해 뒤 첫 자리만 입력해요. 나머지 번호는 받지 않아요.'}
+              </Text>
             </View>
 
             {/* 휴대폰 번호 */}
