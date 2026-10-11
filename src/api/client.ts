@@ -7,7 +7,23 @@ import type { ApiError, ApiFieldError } from './types';
 
 const SIGNIN_PATH = '/api/v1/auth/signin';
 const REFRESH_PATH = '/api/v1/auth/token/refresh';
-const NO_AUTH_PATHS = [SIGNIN_PATH, REFRESH_PATH];
+// 스웨거에서 security:[]로 표시된(인증 불필요) Auth 엔드포인트 전체.
+// 요청에 Authorization을 붙이지 않고, 401을 받아도 재발급+재시도 대상에서 제외한다.
+const NO_AUTH_PATHS = [
+  SIGNIN_PATH,
+  REFRESH_PATH,
+  '/api/v1/auth/check-id',
+  '/api/v1/auth/signup',
+  '/api/v1/auth/verify/send',
+  '/api/v1/auth/verify/check',
+  '/api/v1/auth/email/verify/send',
+  '/api/v1/auth/email/verify/check',
+  '/api/v1/auth/find-id/phone',
+  '/api/v1/auth/find-id/email',
+  '/api/v1/auth/password/reset/verify/phone',
+  '/api/v1/auth/password/reset/verify/email',
+  '/api/v1/auth/password/reset',
+];
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
@@ -110,11 +126,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
-    const isRefreshCall = originalRequest?.url?.startsWith(REFRESH_PATH);
-    const isSigninCall = originalRequest?.url?.startsWith(SIGNIN_PATH);
+    const isNoAuthCall = NO_AUTH_PATHS.some((path) => originalRequest?.url?.startsWith(path));
     const isUnauthorized = error.response?.status === 401;
 
-    if (isUnauthorized && originalRequest && !originalRequest._retry && !isRefreshCall && !isSigninCall) {
+    if (isUnauthorized && originalRequest && !originalRequest._retry && !isNoAuthCall) {
       originalRequest._retry = true;
       try {
         const accessToken = await getRefreshedAccessToken();

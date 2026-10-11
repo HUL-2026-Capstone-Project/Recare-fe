@@ -1,13 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { authApi } from '@/api/authApi';
+import { getErrorMessage } from '@/api/errorMessage';
+import type { ApiError } from '@/api/types';
+import { useFindIdStore } from '@/store/findIdStore';
 
 const CARRIERS = ['SKT', 'KT', 'LG U+', '알뜰폰'] as const;
 type Carrier = (typeof CARRIERS)[number];
 type Tab = 'phone' | 'email';
+
+// 앱 UI 라벨 → 서버 코드(SKT|KT|LGU|MVNO)
+const CARRIER_CODES: Record<Carrier, string> = {
+  SKT: 'SKT',
+  KT: 'KT',
+  'LG U+': 'LGU',
+  알뜰폰: 'MVNO',
+};
 
 export default function FindIdScreen() {
   const { top } = useSafeAreaInsets();
@@ -19,12 +31,21 @@ export default function FindIdScreen() {
   const [phone, setPhone] = useState('');
   const [phoneTimerActive, setPhoneTimerActive] = useState(false);
   const [phoneSeconds, setPhoneSeconds] = useState(180);
+  const [phoneCode, setPhoneCode] = useState('');
+  const [isSendingPhoneCode, setIsSendingPhoneCode] = useState(false);
+  const [isCheckingPhoneCode, setIsCheckingPhoneCode] = useState(false);
 
   // email tab state
   const [emailName, setEmailName] = useState('');
   const [email, setEmail] = useState('');
   const [emailTimerActive, setEmailTimerActive] = useState(false);
   const [emailSeconds, setEmailSeconds] = useState(180);
+  const [emailCode, setEmailCode] = useState('');
+  const [isSendingEmailCode, setIsSendingEmailCode] = useState(false);
+  const [isCheckingEmailCode, setIsCheckingEmailCode] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!phoneTimerActive) return;
@@ -52,6 +73,87 @@ export default function FindIdScreen() {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const handleSendPhoneCode = async () => {
+    if (isSendingPhoneCode) return;
+    setErrorMessage(null);
+    setIsSendingPhoneCode(true);
+    try {
+      await authApi.sendVerifyCode({ phone, purpose: 'FIND_ID' });
+      setPhoneSeconds(180);
+      setPhoneTimerActive(true);
+    } catch (e) {
+      setErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsSendingPhoneCode(false);
+    }
+  };
+
+  const handleCheckPhoneCode = async () => {
+    if (isCheckingPhoneCode) return;
+    setErrorMessage(null);
+    setIsCheckingPhoneCode(true);
+    try {
+      const res = await authApi.checkVerifyCode({ phone, code: phoneCode, purpose: 'FIND_ID' });
+      if (!res.verified) setErrorMessage('인증번호가 올바르지 않습니다.');
+    } catch (e) {
+      setErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsCheckingPhoneCode(false);
+    }
+  };
+
+  const handleSendEmailCode = async () => {
+    if (isSendingEmailCode) return;
+    setErrorMessage(null);
+    setIsSendingEmailCode(true);
+    try {
+      await authApi.sendEmailVerifyCode({ email, purpose: 'FIND_ID' });
+      setEmailSeconds(180);
+      setEmailTimerActive(true);
+    } catch (e) {
+      setErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsSendingEmailCode(false);
+    }
+  };
+
+  const handleCheckEmailCode = async () => {
+    if (isCheckingEmailCode) return;
+    setErrorMessage(null);
+    setIsCheckingEmailCode(true);
+    try {
+      const res = await authApi.checkEmailVerifyCode({ email, code: emailCode, purpose: 'FIND_ID' });
+      if (!res.verified) setErrorMessage('인증번호가 올바르지 않습니다.');
+    } catch (e) {
+      setErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsCheckingEmailCode(false);
+    }
+  };
+
+  const handleFindId = async () => {
+    if (isSubmitting) return;
+    setErrorMessage(null);
+    setIsSubmitting(true);
+    try {
+      const res =
+        tab === 'phone'
+          ? await authApi.findIdByPhone({
+              name: phoneName,
+              carrier: CARRIER_CODES[selectedCarrier],
+              phone,
+              code: phoneCode,
+            })
+          : await authApi.findIdByEmail({ name: emailName, email, code: emailCode });
+      useFindIdStore.getState().setAccounts(res.accounts);
+      router.push('/(auth)/find-id-result');
+    } catch (e) {
+      setErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -186,12 +288,17 @@ export default function FindIdScreen() {
                 <TouchableOpacity
                   className="h-[52px] px-4 rounded-xl bg-white items-center justify-center"
                   activeOpacity={0.85}
-                  onPress={() => { setPhoneSeconds(180); setPhoneTimerActive(true); }}
-                  style={{ borderWidth: 1.5, borderColor: colors.primary }}
+                  onPress={handleSendPhoneCode}
+                  disabled={isSendingPhoneCode}
+                  style={{ borderWidth: 1.5, borderColor: colors.primary, opacity: isSendingPhoneCode ? 0.6 : 1 }}
                 >
-                  <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
-                    인증 요청
-                  </Text>
+                  {isSendingPhoneCode ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
+                      인증 요청
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -202,6 +309,8 @@ export default function FindIdScreen() {
                     className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
                     placeholder="인증번호 입력"
                     placeholderTextColor={colors.text3}
+                    value={phoneCode}
+                    onChangeText={setPhoneCode}
                     keyboardType="number-pad"
                     style={{ letterSpacing: -0.3, paddingRight: phoneTimerActive ? 64 : 16 }}
                   />
@@ -216,11 +325,17 @@ export default function FindIdScreen() {
                 <TouchableOpacity
                   className="h-[52px] px-4 rounded-xl bg-white items-center justify-center"
                   activeOpacity={0.85}
-                  style={{ borderWidth: 1.5, borderColor: colors.primary }}
+                  onPress={handleCheckPhoneCode}
+                  disabled={isCheckingPhoneCode}
+                  style={{ borderWidth: 1.5, borderColor: colors.primary, opacity: isCheckingPhoneCode ? 0.6 : 1 }}
                 >
-                  <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
-                    확인
-                  </Text>
+                  {isCheckingPhoneCode ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
+                      확인
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -253,12 +368,17 @@ export default function FindIdScreen() {
                 <TouchableOpacity
                   className="h-[52px] px-4 rounded-xl bg-white items-center justify-center"
                   activeOpacity={0.85}
-                  onPress={() => { setEmailSeconds(180); setEmailTimerActive(true); }}
-                  style={{ borderWidth: 1.5, borderColor: colors.primary }}
+                  onPress={handleSendEmailCode}
+                  disabled={isSendingEmailCode}
+                  style={{ borderWidth: 1.5, borderColor: colors.primary, opacity: isSendingEmailCode ? 0.6 : 1 }}
                 >
-                  <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
-                    인증 요청
-                  </Text>
+                  {isSendingEmailCode ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
+                      인증 요청
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -269,6 +389,8 @@ export default function FindIdScreen() {
                     className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
                     placeholder="인증번호 입력"
                     placeholderTextColor={colors.text3}
+                    value={emailCode}
+                    onChangeText={setEmailCode}
                     keyboardType="number-pad"
                     style={{ letterSpacing: -0.3, paddingRight: emailTimerActive ? 64 : 16 }}
                   />
@@ -283,11 +405,17 @@ export default function FindIdScreen() {
                 <TouchableOpacity
                   className="h-[52px] px-4 rounded-xl bg-white items-center justify-center"
                   activeOpacity={0.85}
-                  style={{ borderWidth: 1.5, borderColor: colors.primary }}
+                  onPress={handleCheckEmailCode}
+                  disabled={isCheckingEmailCode}
+                  style={{ borderWidth: 1.5, borderColor: colors.primary, opacity: isCheckingEmailCode ? 0.6 : 1 }}
                 >
-                  <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
-                    확인
-                  </Text>
+                  {isCheckingEmailCode ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
+                      확인
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -299,6 +427,12 @@ export default function FindIdScreen() {
               </Text>
             </View>
           )}
+
+          {errorMessage ? (
+            <Text className="text-danger text-[12px] mt-2" style={{ letterSpacing: -0.2 }}>
+              {errorMessage}
+            </Text>
+          ) : null}
         </View>
 
         {/* 아이디 찾기 버튼 */}
@@ -306,11 +440,17 @@ export default function FindIdScreen() {
           <TouchableOpacity
             className="h-[52px] w-full bg-primary rounded-xl items-center justify-center"
             activeOpacity={0.85}
-            onPress={() => router.push('/(auth)/find-id-result')}
+            onPress={handleFindId}
+            disabled={isSubmitting}
+            style={{ opacity: isSubmitting ? 0.7 : 1 }}
           >
-            <Text className="text-white text-base font-bold" style={{ letterSpacing: -0.3 }}>
-              아이디 찾기
-            </Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white text-base font-bold" style={{ letterSpacing: -0.3 }}>
+                아이디 찾기
+              </Text>
+            )}
           </TouchableOpacity>
 
           {/* 비밀번호 찾기 링크 */}

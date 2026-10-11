@@ -114,6 +114,8 @@ export default function SignUpAddressScreen() {
         </View>
 
         {/* 다음 버튼 */}
+        {/* TODO: 주소 입력 수단(검색/직접입력)이 시안에 없어 API 연동 보류.
+            주소 값이 생기면 useSignupStore().submitSignup(address, email?) 호출로 회원가입 제출(POST /auth/signup) 완료 가능 */}
         <View className="pb-4">
           <TouchableOpacity
             className="h-[52px] w-full bg-primary rounded-xl items-center justify-center"

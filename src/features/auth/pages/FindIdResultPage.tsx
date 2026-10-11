@@ -3,14 +3,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
-
-const FOUND_ACCOUNTS = [
-  { id: 'hyung****jin', joinedAt: '2023.08.14 가입' },
-  { id: 'recare***24', joinedAt: '2024.01.02 가입' },
-];
+import { useFindIdStore } from '@/store/findIdStore';
 
 export default function FindIdResultScreen() {
   const { top } = useSafeAreaInsets();
+  const accounts = useFindIdStore((state) => state.accounts);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -57,9 +54,9 @@ export default function FindIdResultScreen() {
 
         {/* 아이디 카드 목록 */}
         <View className="gap-2 flex-1">
-          {FOUND_ACCOUNTS.map(account => (
+          {accounts.map(account => (
             <View
-              key={account.id}
+              key={account.maskedLoginId}
               className="bg-white rounded-2xl p-3.5 flex-row items-center gap-3"
               style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
             >
@@ -77,13 +74,13 @@ export default function FindIdResultScreen() {
                   className="text-[15px] font-bold text-text1"
                   style={{ letterSpacing: -0.3 }}
                 >
-                  {account.id}
+                  {account.maskedLoginId}
                 </Text>
                 <Text
                   className="text-[11px] text-text3 mt-0.5"
                   style={{ letterSpacing: -0.2 }}
                 >
-                  {account.joinedAt}
+                  {account.joinedAt.replace(/-/g, '.')} 가입
                 </Text>
               </View>
             </View>
