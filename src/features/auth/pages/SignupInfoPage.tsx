@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { authApi } from '@/api/authApi';
+import { getErrorMessage } from '@/api/errorMessage';
+import type { ApiError } from '@/api/types';
+import { useSignupStore } from '@/store/signupStore';
 
 const CARRIERS = ['SKT', 'KT', 'LG U+', '알뜰폰'] as const;
 type Carrier = (typeof CARRIERS)[number];
+
+// 앱 UI 라벨 → 서버 코드(SignUpRequest.carrier 패턴: SKT|KT|LGU|MVNO)
+const CARRIER_CODES: Record<Carrier, string> = {
+  SKT: 'SKT',
+  KT: 'KT',
+  'LG U+': 'LGU',
+  알뜰폰: 'MVNO',
+};
 
 // 주민등록번호 앞 6자리의 월/일 범위만 확인(실제 달력 검증은 아님). 스펙에서 명시한 수준으로만 검사.
 function isResidentFrontValid(front: string) {
@@ -37,6 +49,10 @@ export default function SignUpInfoScreen() {
   const residentBackRef = useRef<TextInput>(null);
   const [phone, setPhone] = useState('');
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isCheckingCode, setIsCheckingCode] = useState(false);
+  const [verifyErrorMessage, setVerifyErrorMessage] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
@@ -59,10 +75,39 @@ export default function SignUpInfoScreen() {
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
-  const handleRequestVerification = () => {
-    setSeconds(180);
-    setTimerActive(true);
-    setPhoneVerified(false);
+  const handleRequestVerification = async () => {
+    if (isSendingCode) return;
+    setVerifyErrorMessage(null);
+    setIsSendingCode(true);
+    try {
+      await authApi.sendVerifyCode({ phone, purpose: 'SIGNUP' });
+      setSeconds(180);
+      setTimerActive(true);
+      setPhoneVerified(false);
+    } catch (e) {
+      setVerifyErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleCheckVerification = async () => {
+    if (isCheckingCode) return;
+    setVerifyErrorMessage(null);
+    setIsCheckingCode(true);
+    try {
+      const res = await authApi.checkVerifyCode({ phone, code: verifyCode, purpose: 'SIGNUP' });
+      if (res.verified) {
+        setPhoneVerified(true);
+        setTimerActive(false);
+      } else {
+        setVerifyErrorMessage('인증번호가 올바르지 않습니다.');
+      }
+    } catch (e) {
+      setVerifyErrorMessage(getErrorMessage(e as ApiError));
+    } finally {
+      setIsCheckingCode(false);
+    }
   };
 
   const handleChangeResidentFront = (text: string) => {
@@ -105,6 +150,16 @@ export default function SignUpInfoScreen() {
       setShowAlert(true);
       return;
     }
+
+    useSignupStore.getState().setStep1({
+      name: name.trim(),
+      loginId: userId.trim(),
+      password,
+      residentFront,
+      residentGenderDigit: residentBack,
+      carrier: CARRIER_CODES[selectedCarrier],
+      phone,
+    });
     router.push('/(auth)/signup-address');
   };
 
@@ -165,6 +220,7 @@ export default function SignUpInfoScreen() {
             />
 
             {/* 아이디 */}
+            {/* TODO: 중복 확인 버튼이 시안에 없어 연결 안 함. useSignupStore().checkLoginIdAvailability(userId) 사용 가능 */}
             <TextInput
               className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
               placeholder="아이디를 입력해주세요"
@@ -305,14 +361,19 @@ export default function SignUpInfoScreen() {
                   className="h-[52px] px-4 rounded-xl bg-white items-center justify-center"
                   activeOpacity={0.85}
                   onPress={handleRequestVerification}
-                  style={{ borderWidth: 1.5, borderColor: colors.primary }}
+                  disabled={isSendingCode}
+                  style={{ borderWidth: 1.5, borderColor: colors.primary, opacity: isSendingCode ? 0.6 : 1 }}
                 >
-                  <Text
-                    className="text-primary text-[14px] font-bold"
-                    style={{ letterSpacing: -0.3 }}
-                  >
-                    인증 요청
-                  </Text>
+                  {isSendingCode ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text
+                      className="text-primary text-[14px] font-bold"
+                      style={{ letterSpacing: -0.3 }}
+                    >
+                      인증 요청
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -323,6 +384,8 @@ export default function SignUpInfoScreen() {
                     className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
                     placeholder="인증번호 입력"
                     placeholderTextColor={colors.text3}
+                    value={verifyCode}
+                    onChangeText={setVerifyCode}
                     keyboardType="number-pad"
                     style={{ letterSpacing: -0.3, paddingRight: timerActive ? 64 : 16 }}
                   />
@@ -343,17 +406,28 @@ export default function SignUpInfoScreen() {
                 <TouchableOpacity
                   className="h-[52px] px-4 rounded-xl bg-white items-center justify-center"
                   activeOpacity={0.85}
-                  onPress={() => { setPhoneVerified(true); setTimerActive(false); }}
-                  style={{ borderWidth: 1.5, borderColor: colors.primary }}
+                  onPress={handleCheckVerification}
+                  disabled={isCheckingCode}
+                  style={{ borderWidth: 1.5, borderColor: colors.primary, opacity: isCheckingCode ? 0.6 : 1 }}
                 >
-                  <Text
-                    className="text-primary text-[14px] font-bold"
-                    style={{ letterSpacing: -0.3 }}
-                  >
-                    확인
-                  </Text>
+                  {isCheckingCode ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text
+                      className="text-primary text-[14px] font-bold"
+                      style={{ letterSpacing: -0.3 }}
+                    >
+                      확인
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
+
+              {verifyErrorMessage ? (
+                <Text className="text-danger text-[12px] mt-1.5" style={{ letterSpacing: -0.2 }}>
+                  {verifyErrorMessage}
+                </Text>
+              ) : null}
             </View>
 
             {/* 안내 박스 */}
