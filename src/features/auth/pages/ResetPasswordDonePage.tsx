@@ -38,7 +38,8 @@ export default function ResetPasswordDoneScreen() {
           <TouchableOpacity
             className="h-[52px] w-full bg-primary rounded-xl items-center justify-center"
             activeOpacity={0.85}
-            onPress={() => router.replace('/(auth)/login')}
+            // 스택에 남아 있는 find-pw 화면(휴대폰/이메일 인증 입력값 포함)까지 정리하기 위해 로그인 화면까지 되돌아간다.
+            onPress={() => router.dismissTo('/(auth)/login')}
           >
             <Text className="text-white text-base font-bold" style={{ letterSpacing: -0.3 }}>
               로그인하러 가기
