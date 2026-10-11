@@ -7,6 +7,7 @@ import { colors } from '@/shared/constants/colors';
 import { authApi } from '@/api/authApi';
 import { getErrorMessage } from '@/api/errorMessage';
 import type { ApiError } from '@/api/types';
+import { useResetPasswordStore } from '@/store/resetPasswordStore';
 
 const CARRIERS = ['SKT', 'KT', 'LG U+', '알뜰폰'] as const;
 type Carrier = (typeof CARRIERS)[number];
@@ -45,8 +46,6 @@ export default function FindPwScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // 2단계(새 비밀번호 입력) 화면이 없어 resetToken은 메모리에만 보관하고 아직 아무도 쓰지 않는다.
-  const [resetToken, setResetToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (!phoneTimerActive) return;
@@ -134,7 +133,6 @@ export default function FindPwScreen() {
     }
   };
 
-  // 1단계(본인확인) 완료까지만 연동. 2단계(새 비밀번호 입력) 화면이 없어 resetToken 이후는 TODO.
   const handleNext = async () => {
     if (isSubmitting) return;
     setErrorMessage(null);
@@ -149,8 +147,8 @@ export default function FindPwScreen() {
               code: phoneCode,
             })
           : await authApi.verifyPasswordResetByEmail({ loginId: emailUserId, email, code: emailCode });
-      setResetToken(res.resetToken);
-      // TODO: 새 비밀번호 입력 화면이 생기면 resetToken을 가지고 이동 후 authApi.resetPassword({resetToken, newPassword}) 호출
+      useResetPasswordStore.getState().setResetToken(res.resetToken);
+      router.push('/(auth)/reset-password');
     } catch (e) {
       setErrorMessage(getErrorMessage(e as ApiError));
     } finally {
@@ -452,12 +450,6 @@ export default function FindPwScreen() {
           {errorMessage ? (
             <Text className="text-danger text-[12px] mt-2" style={{ letterSpacing: -0.2 }}>
               {errorMessage}
-            </Text>
-          ) : null}
-          {resetToken ? (
-            // 임시 UI, 디자인 필요: 2단계(새 비밀번호 입력) 화면이 없어 결과만 알림
-            <Text className="text-[12px] mt-2" style={{ color: colors.success, letterSpacing: -0.2 }}>
-              본인 확인이 완료됐어요. 새 비밀번호 입력 화면은 아직 준비 중이에요.
             </Text>
           ) : null}
         </View>

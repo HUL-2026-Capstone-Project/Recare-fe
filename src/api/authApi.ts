@@ -126,7 +126,6 @@ export const authApi = {
     await apiClient.post('/api/v1/auth/password/reset', payload);
   },
 
-  // UI 연결 없음(화면 자체가 시안에 없음) — 함수만 준비
   async changePassword(payload: PasswordChangeRequest): Promise<void> {
     await apiClient.put('/api/v1/auth/password', payload);
   },

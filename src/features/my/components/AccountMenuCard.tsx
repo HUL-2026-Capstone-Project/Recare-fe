@@ -17,6 +17,10 @@ export function AccountMenuCard({ items }: { items: (typeof myMock)['accountMenu
               router.push('/notification-settings');
               return;
             }
+            if (item.icon === 'lock') {
+              router.push('/change-password');
+              return;
+            }
             // 메뉴 이동 화면이 시안에 없어 스텁 처리 (TODO)
           }}
           className="flex-row items-center"
