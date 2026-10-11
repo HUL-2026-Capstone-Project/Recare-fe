@@ -17,18 +17,23 @@ type SignupDraft = {
 
 type SignupState = {
   draft: SignupDraft | null;
+  // 2단계 약관 동의 화면과 약관 상세 화면을 오가도 체크 상태가 유지되도록 스토어에 둔다.
+  // TODO: /users/terms는 인증(JWT)이 필요해 가입 전에는 호출할 수 없어 서버에 저장하지 않고 화면 상태로만 관리한다.
+  termsAgree: boolean[];
   setStep1: (draft: SignupDraft) => void;
-  // TODO: 아이디 중복 확인 버튼이 시안에 없어 호출 지점을 연결하지 않음
+  setTermsAgree: (next: boolean[]) => void;
   checkLoginIdAvailability: (loginId: string) => Promise<boolean>;
-  // TODO: 주소 입력 화면이 없어 아직 어디서도 호출하지 않음. 입력 UI가 생기면 address(, email)와 함께 호출
   submitSignup: (address: string, email?: string) => Promise<void>;
   reset: () => void;
 };
 
 export const useSignupStore = create<SignupState>((set, get) => ({
   draft: null,
+  termsAgree: [false, false, false],
 
   setStep1: (draft) => set({ draft }),
+
+  setTermsAgree: (next) => set({ termsAgree: next }),
 
   checkLoginIdAvailability: async (loginId) => {
     const res = await authApi.checkLoginId(loginId);
@@ -56,9 +61,9 @@ export const useSignupStore = create<SignupState>((set, get) => ({
     const res = await authApi.signup(payload);
     await tokenStorage.setTokens(res.accessToken, res.refreshToken, res.tokenType);
     useAuthStore.setState({ status: 'authenticated' });
-    // 가입 성공 후 메모리에 있던 입력값(비밀번호, 주민번호 포함)을 비운다.
-    set({ draft: null });
+    // 가입 성공 후 메모리에 있던 입력값(비밀번호, 주민번호, 약관 체크 상태 포함)을 비운다.
+    set({ draft: null, termsAgree: [false, false, false] });
   },
 
-  reset: () => set({ draft: null }),
+  reset: () => set({ draft: null, termsAgree: [false, false, false] }),
 }));
