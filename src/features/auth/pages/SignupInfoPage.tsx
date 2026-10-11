@@ -12,6 +12,11 @@ import { useSignupStore } from '@/store/signupStore';
 const CARRIERS = ['SKT', 'KT', 'LG U+', '알뜰폰'] as const;
 type Carrier = (typeof CARRIERS)[number];
 
+// 스웨거 SignUpRequest.loginId pattern — check-id에는 서버 측 형식 제약이 없어 가입 요청 기준으로 클라이언트에서 선검증한다.
+const LOGIN_ID_PATTERN = /^[a-zA-Z0-9_]{4,20}$/;
+
+type IdCheckStatus = 'default' | 'checking' | 'ok' | 'taken' | 'invalid';
+
 // 앱 UI 라벨 → 서버 코드(SignUpRequest.carrier 패턴: SKT|KT|LGU|MVNO)
 const CARRIER_CODES: Record<Carrier, string> = {
   SKT: 'SKT',
@@ -41,6 +46,8 @@ export default function SignUpInfoScreen() {
 
   const [name, setName] = useState('');
   const [userId, setUserId] = useState('');
+  const [idCheckStatus, setIdCheckStatus] = useState<IdCheckStatus>('default');
+  const [idCheckErrorMessage, setIdCheckErrorMessage] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [residentFront, setResidentFront] = useState('');
   const [residentBack, setResidentBack] = useState('');
@@ -73,6 +80,31 @@ export default function SignUpInfoScreen() {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const handleChangeUserId = (text: string) => {
+    setUserId(text);
+    // 아이디를 수정하면 이전 중복 확인 결과는 더 이상 유효하지 않으므로 화면 상태를 초기화한다.
+    if (idCheckStatus !== 'default') setIdCheckStatus('default');
+    if (idCheckErrorMessage) setIdCheckErrorMessage(null);
+  };
+
+  const handleCheckDuplicate = async () => {
+    if (idCheckStatus === 'checking') return;
+    const trimmed = userId.trim();
+    if (!LOGIN_ID_PATTERN.test(trimmed)) {
+      setIdCheckStatus('invalid');
+      return;
+    }
+    setIdCheckErrorMessage(null);
+    setIdCheckStatus('checking');
+    try {
+      const available = await useSignupStore.getState().checkLoginIdAvailability(trimmed);
+      setIdCheckStatus(available ? 'ok' : 'taken');
+    } catch (e) {
+      setIdCheckStatus('default');
+      setIdCheckErrorMessage(getErrorMessage(e as ApiError));
+    }
   };
 
   const handleRequestVerification = async () => {
@@ -132,7 +164,11 @@ export default function SignUpInfoScreen() {
   const handleNext = () => {
     const missing: string[] = [];
     if (!name.trim()) missing.push('이름');
-    if (!userId.trim()) missing.push('아이디');
+    if (!userId.trim()) {
+      missing.push('아이디');
+    } else if (idCheckStatus !== 'ok') {
+      missing.push('아이디 중복 확인');
+    }
     if (!password.trim()) missing.push('비밀번호');
 
     const residentComplete = residentFront.length === 6 && residentBack.length === 1;
@@ -208,7 +244,7 @@ export default function SignUpInfoScreen() {
 
         {/* 폼 */}
         <ScrollView className="flex-1 pt-3" showsVerticalScrollIndicator={false}>
-          <View className="gap-3">
+          <View className="gap-[7px]">
             {/* 이름 */}
             <TextInput
               className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
@@ -220,17 +256,79 @@ export default function SignUpInfoScreen() {
             />
 
             {/* 아이디 */}
-            {/* TODO: 중복 확인 버튼이 시안에 없어 연결 안 함. useSignupStore().checkLoginIdAvailability(userId) 사용 가능 */}
-            <TextInput
-              className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
-              placeholder="아이디를 입력해주세요"
-              placeholderTextColor={colors.text3}
-              value={userId}
-              onChangeText={setUserId}
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={{ letterSpacing: -0.3 }}
-            />
+            <View>
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1" style={{ position: 'relative' }}>
+                  <TextInput
+                    className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+                    placeholder="아이디를 입력해주세요"
+                    placeholderTextColor={colors.text3}
+                    value={userId}
+                    onChangeText={handleChangeUserId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={{
+                      letterSpacing: -0.3,
+                      paddingRight: idCheckStatus === 'ok' ? 44 : 16,
+                      borderWidth: idCheckStatus === 'taken' || idCheckStatus === 'invalid' ? 1.5 : 0,
+                      borderColor: colors.danger,
+                    }}
+                  />
+                  {idCheckStatus === 'ok' && (
+                    <View
+                      className="absolute right-3.5 top-0 bottom-0 justify-center"
+                      pointerEvents="none"
+                    >
+                      <Image
+                        source={require('@/shared/assets/icons/check-circle-success.png')}
+                        style={{ width: 18, height: 18 }}
+                      />
+                    </View>
+                  )}
+                </View>
+                <TouchableOpacity
+                  className="h-[52px] rounded-xl bg-white items-center justify-center"
+                  activeOpacity={0.85}
+                  onPress={handleCheckDuplicate}
+                  disabled={idCheckStatus === 'checking'}
+                  style={{
+                    minWidth: 92,
+                    paddingHorizontal: 16,
+                    borderWidth: 1.5,
+                    borderColor: colors.primary,
+                    opacity: idCheckStatus === 'checking' ? 0.6 : 1,
+                  }}
+                >
+                  {idCheckStatus === 'checking' ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
+                      중복 확인
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+              {idCheckStatus === 'ok' && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.success, letterSpacing: -0.2 }}>
+                  사용 가능한 아이디예요
+                </Text>
+              )}
+              {idCheckStatus === 'taken' && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                  이미 사용 중인 아이디예요
+                </Text>
+              )}
+              {idCheckStatus === 'invalid' && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                  아이디 형식을 확인해 주세요
+                </Text>
+              )}
+              {idCheckErrorMessage && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                  {idCheckErrorMessage}
+                </Text>
+              )}
+            </View>
 
             {/* 비밀번호 */}
             <TextInput
