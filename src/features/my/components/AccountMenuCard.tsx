@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
+import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { Card } from '@/features/home/components/Card';
@@ -10,9 +11,14 @@ export function AccountMenuCard({ items }: { items: (typeof myMock)['accountMenu
     <Card style={{ padding: 4, marginBottom: 12 }}>
       {items.map((item, index) => (
         <Pressable
-          // 메뉴 이동 화면이 시안에 없어 스텁 처리 (TODO)
           key={item.label}
-          onPress={() => {}}
+          onPress={() => {
+            if (item.icon === 'bell') {
+              router.push('/notification-settings');
+              return;
+            }
+            // 메뉴 이동 화면이 시안에 없어 스텁 처리 (TODO)
+          }}
           className="flex-row items-center"
           style={{
             gap: 10,
