@@ -97,7 +97,8 @@ export default function ResetPasswordScreen() {
     useResetPasswordStore.getState().clear();
     setNewPassword('');
     setConfirmPassword('');
-    router.replace('/(auth)/find-pw');
+    // find-pw 화면을 새로 쌓지 않고 기존 화면으로 되돌아가 스택에 남은 인증 입력값을 정리한다.
+    router.dismissTo('/(auth)/find-pw');
   };
 
   const handleSubmit = async () => {
