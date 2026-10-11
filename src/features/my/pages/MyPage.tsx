@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { colors } from '@/shared/constants/colors';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useToastStore } from '@/store/toastStore';
 import { ProfileCard } from '../components/ProfileCard';
 import { StatsRow } from '../components/StatsRow';
 import { AccountMenuCard } from '../components/AccountMenuCard';
@@ -13,10 +14,11 @@ import { PolicyMenuCard } from '../components/PolicyMenuCard';
 import { APP_VERSION, myMock } from '../mocks';
 
 export default function MyPage() {
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const logout = useAuthStore((state) => state.logout);
   const profile = useProfileStore((state) => state.profile);
   const fetchProfile = useProfileStore((state) => state.fetchProfile);
+  const toastMessage = useToastStore((state) => state.message);
 
   useEffect(() => {
     if (!profile) fetchProfile();
@@ -79,6 +81,17 @@ export default function MyPage() {
           Re:care {APP_VERSION}
         </Text>
       </ScrollView>
+
+      {toastMessage && (
+        // 임시 UI, 보고: 기존 토스트 컴포넌트가 없어 최소 구현. 위치는 탭바(60px) 위로 임시 결정.
+        <View
+          pointerEvents="none"
+          className="absolute left-5 right-5 rounded-xl items-center"
+          style={{ bottom: Math.max(bottom, 8) + 60 + 12, backgroundColor: colors.text1, paddingVertical: 12 }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: -0.3 }}>{toastMessage}</Text>
+        </View>
+      )}
     </View>
   );
 }
