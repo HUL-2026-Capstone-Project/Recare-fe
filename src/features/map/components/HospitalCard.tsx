@@ -26,9 +26,13 @@ export function HospitalCard({
       }}
     >
       <View className="flex-row justify-between items-start" style={{ marginBottom: 4 }}>
-        <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 50, backgroundColor: colors.primaryLight }}>
-          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.primary }}>지정병원</Text>
-        </View>
+        {hospital.designated ? (
+          <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 50, backgroundColor: colors.primaryLight }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.primary }}>지정병원</Text>
+          </View>
+        ) : (
+          <View />
+        )}
         <View
           style={{
             backgroundColor: colors.surface,

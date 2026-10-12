@@ -18,8 +18,8 @@ export function MapBottomSheet({
   hospitals: Hospital[];
   radius: string;
   total: number;
-  selectedId: string;
-  onSelectCard: (id: string) => void;
+  selectedId: number | null;
+  onSelectCard: (id: number) => void;
 }) {
   const scrollRef = useRef<ScrollView>(null);
 

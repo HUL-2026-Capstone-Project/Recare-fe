@@ -1,12 +1,9 @@
-import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import { FilterIcon, SearchIcon } from './icons';
 
-export function MapSearchBar() {
-  const [value, setValue] = useState('');
-
+export function MapSearchBar({ value, onChangeText }: { value: string; onChangeText: (text: string) => void }) {
   return (
     <View
       style={{
@@ -31,7 +28,7 @@ export function MapSearchBar() {
       <SearchIcon size={20} />
       <TextInput
         value={value}
-        onChangeText={setValue}
+        onChangeText={onChangeText}
         placeholder="병원, 지역명으로 검색"
         placeholderTextColor={colors.text3}
         style={{ flex: 1, fontSize: 14, color: colors.text1, letterSpacing: -0.3 }}
