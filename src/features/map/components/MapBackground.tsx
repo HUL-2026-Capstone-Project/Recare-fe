@@ -7,9 +7,6 @@ import { env } from '@/config/env';
 import type { Hospital } from '../mocks';
 import { MapMarkerIcon } from './icons';
 
-// 강남역 부근. 실제 위치 권한/현재 위치 조회가 없어 지도 중심이자 병원 검색 기준 좌표로도 쓴다.
-export const GANGNAM_STATION = { latitude: 37.4979, longitude: 127.0276 };
-
 // 커스텀 마커는 라이브러리가 뷰를 고정 크기 비트맵으로 스냅샷하는 방식이라
 // 라벨 길이가 제각각이어도 모두 같은 바운딩 박스(140×40) 안에 하단 정렬해 배치한다.
 const MARKER_WIDTH = 140;
@@ -48,22 +45,25 @@ function MapMarkerPill({ label, active }: { label: string; active?: boolean }) {
 
 export function MapBackground({
   mapRef,
+  center,
   hospitals,
   selectedId,
   onSelectPin,
 }: {
   mapRef: Ref<NaverMapViewRef>;
+  center: { latitude: number; longitude: number } | null;
   hospitals: Hospital[];
   selectedId: number | null;
   onSelectPin: (id: number) => void;
 }) {
-  if (!env.naverMapClientId) {
-    // Client ID가 없으면 네이티브 지도를 아예 마운트하지 않아 초기화 실패로 인한 크래시를 방지한다.
+  // Client ID가 없으면 초기화 실패 크래시를 막기 위해, center가 없으면(위치 확정 전) initialCamera가
+  // 마운트 때 한 번만 적용되는 특성상 검색 좌표와 어긋나지 않도록 네이티브 지도를 마운트하지 않는다.
+  if (!env.naverMapClientId || !center) {
     return <View style={{ flex: 1, backgroundColor: '#E8F0FA' }} />;
   }
 
   return (
-    <NaverMapView ref={mapRef} style={{ flex: 1 }} initialCamera={{ ...GANGNAM_STATION, zoom: 15 }}>
+    <NaverMapView ref={mapRef} style={{ flex: 1 }} initialCamera={{ ...center, zoom: 15 }}>
       {hospitals.map((hospital) => (
         <NaverMapMarkerOverlay
           key={hospital.id}
