@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
@@ -59,8 +60,7 @@ export default function ProfilePage() {
           <View style={{ paddingTop: 8, paddingHorizontal: 20, paddingBottom: Math.max(bottom, 12), backgroundColor: colors.bg }}>
             <TouchableOpacity
               activeOpacity={0.8}
-              // 프로필 수정 화면이 시안에 없어 스텁 처리 (TODO). 수정 API(profileStore.updateProfile)는 구현돼 있으나 호출하는 UI는 없음
-              onPress={() => {}}
+              onPress={() => router.push('/profile-edit')}
               className="items-center justify-center"
               style={{ height: 52, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary }}
             >

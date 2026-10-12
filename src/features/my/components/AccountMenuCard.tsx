@@ -21,7 +21,10 @@ export function AccountMenuCard({ items }: { items: (typeof myMock)['accountMenu
               router.push('/change-password');
               return;
             }
-            // 메뉴 이동 화면이 시안에 없어 스텁 처리 (TODO)
+            if (item.icon === 'user') {
+              router.push('/profile-edit');
+              return;
+            }
           }}
           className="flex-row items-center"
           style={{
