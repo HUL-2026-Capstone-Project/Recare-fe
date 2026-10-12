@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import type { Hospital } from '../mocks';
@@ -7,6 +7,8 @@ import { HospitalCard } from './HospitalCard';
 
 const CARD_WIDTH = 260;
 const CARD_GAP = 10;
+// 가로 스크롤 끝에서 이만큼 남았을 때 다음 페이지를 요청한다(카드 1장이 조금 안 되는 정도).
+const END_REACHED_THRESHOLD_PX = 200;
 
 export function MapBottomSheet({
   hospitals,
@@ -14,14 +16,24 @@ export function MapBottomSheet({
   total,
   selectedId,
   onSelectCard,
+  onEndReached,
 }: {
   hospitals: Hospital[];
   radius: string;
   total: number;
   selectedId: number | null;
   onSelectCard: (id: number) => void;
+  onEndReached: () => void;
 }) {
   const scrollRef = useRef<ScrollView>(null);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+    const distanceToEnd = contentSize.width - (contentOffset.x + layoutMeasurement.width);
+    if (distanceToEnd < END_REACHED_THRESHOLD_PX) {
+      onEndReached();
+    }
+  };
 
   useEffect(() => {
     const index = hospitals.findIndex((h) => h.id === selectedId);
@@ -63,6 +75,8 @@ export function MapBottomSheet({
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ gap: CARD_GAP, paddingHorizontal: 20, paddingBottom: 18 }}
       >
         {hospitals.map((hospital) => (
