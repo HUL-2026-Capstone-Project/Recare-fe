@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import type { Hospital } from '../mocks';
+import { openNaverRoute, openPhone } from '../utils/linking';
 import { PhoneIcon } from './icons';
 
 export function HospitalCard({
@@ -67,8 +68,7 @@ export function HospitalCard({
         }}
       >
         <Pressable
-          // 전화 연결이 시안에 없어 스텁 처리 (TODO)
-          onPress={() => {}}
+          onPress={() => openPhone(hospital.phone)}
           className="flex-1 flex-row items-center justify-center"
           style={{ height: 32, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, gap: 4 }}
         >
@@ -76,8 +76,7 @@ export function HospitalCard({
           <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text1, letterSpacing: -0.2 }}>전화</Text>
         </Pressable>
         <Pressable
-          // 길찾기(지도 앱 연동)가 시안에 없어 스텁 처리 (TODO)
-          onPress={() => {}}
+          onPress={() => openNaverRoute({ latitude: hospital.latitude, longitude: hospital.longitude, name: hospital.name })}
           className="flex-1 items-center justify-center"
           style={{ height: 32, backgroundColor: colors.primary, borderRadius: 8 }}
         >

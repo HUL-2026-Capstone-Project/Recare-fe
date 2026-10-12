@@ -7,6 +7,7 @@ export type Hospital = {
   latitude: number;
   longitude: number;
   designated: boolean;
+  phone: string | null;
 };
 
 export const filterChips = ['산재 지정', '정형외과', '재활의학과', '야간진료'];
