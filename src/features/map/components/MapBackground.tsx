@@ -7,8 +7,8 @@ import { env } from '@/config/env';
 import type { Hospital } from '../mocks';
 import { MapMarkerIcon } from './icons';
 
-// 강남역 부근, 인근 병원 mock 5곳이 한 화면에 들어오는 수준의 줌(근사치).
-const GANGNAM_STATION = { latitude: 37.4979, longitude: 127.0276 };
+// 강남역 부근. 실제 위치 권한/현재 위치 조회가 없어 지도 중심이자 병원 검색 기준 좌표로도 쓴다.
+export const GANGNAM_STATION = { latitude: 37.4979, longitude: 127.0276 };
 
 // 커스텀 마커는 라이브러리가 뷰를 고정 크기 비트맵으로 스냅샷하는 방식이라
 // 라벨 길이가 제각각이어도 모두 같은 바운딩 박스(140×40) 안에 하단 정렬해 배치한다.
@@ -54,8 +54,8 @@ export function MapBackground({
 }: {
   mapRef: Ref<NaverMapViewRef>;
   hospitals: Hospital[];
-  selectedId: string;
-  onSelectPin: (id: string) => void;
+  selectedId: number | null;
+  onSelectPin: (id: number) => void;
 }) {
   if (!env.naverMapClientId) {
     // Client ID가 없으면 네이티브 지도를 아예 마운트하지 않아 초기화 실패로 인한 크래시를 방지한다.
