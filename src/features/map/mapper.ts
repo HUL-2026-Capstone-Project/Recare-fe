@@ -18,5 +18,6 @@ export function mapHospitalResponseToHospital(res: HospitalResponse): Hospital {
     latitude: res.latitude,
     longitude: res.longitude,
     designated: res.isDesignated ?? false,
+    phone: res.phone,
   };
 }
