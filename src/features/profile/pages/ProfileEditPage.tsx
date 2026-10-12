@@ -8,6 +8,7 @@ import { colors } from '@/shared/constants/colors';
 import { svgAssetUri } from '@/shared/lib/svgAsset';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { useProfileStore } from '@/store/profileStore';
+import type { UserUpdateRequest } from '@/api/userApi';
 import { VerifiedCheckIcon } from '../components/icons';
 import { NONE_LABEL, LANGUAGE_LABELS, formatDate, formatGender, formatPhone } from '../mocks';
 
@@ -18,6 +19,13 @@ function splitAddress(address: string | null): [string, string] {
   const idx = address.lastIndexOf(', ');
   if (idx === -1) return [address, ''];
   return [address.slice(0, idx), address.slice(idx + 2)];
+}
+
+// splitAddress와 짝을 이루는 합치기 규칙 — 저장 시 이 문자열을 그대로 address로 보낸다.
+function joinAddress(base: string, detail: string): string {
+  const trimmedBase = base.trim();
+  const trimmedDetail = detail.trim();
+  return trimmedDetail ? `${trimmedBase}, ${trimmedDetail}` : trimmedBase;
 }
 
 function formatBirthGender(birthDate: string | null, gender: string | null) {
@@ -72,6 +80,7 @@ export default function ProfileEditScreen() {
   const [addressDetail, setAddressDetail] = useState(initialDetail);
   const [addressDetailFocused, setAddressDetailFocused] = useState(false);
   const [language, setLanguage] = useState(profile?.language ?? 'KO');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!profile) router.back();
@@ -79,13 +88,42 @@ export default function ProfileEditScreen() {
 
   if (!profile) return null;
 
-  // 시안에 없는 UI(검증 오류, 저장 비활성/로딩, 토스트)는 만들지 않는다. 네트워크 요청도 보내지 않는다.
+  // 시안에 없는 UI(검증 오류, 로딩 표시, 토스트)는 만들지 않는다.
   const handleAddressSearch = () => {
     // TODO: 주소 검색(WebView 등) 연결은 다음 작업에서 처리
   };
 
-  const handleSave = () => {
-    // TODO: PATCH /users/infochange 연동은 다음 작업에서 처리 (profileStore.updateProfile 사용 예정)
+  const handleSave = async () => {
+    if (isSaving) return;
+
+    // 바뀐 필드만, 빈 값은 보내지 않는다(빈 문자열로 지우기가 서버에서 가능한지 명세로 확인 안 됨).
+    const payload: UserUpdateRequest = {};
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && trimmedEmail !== (profile.email ?? '')) {
+      payload.email = trimmedEmail;
+    }
+    const nextAddress = joinAddress(addressBase, addressDetail);
+    if (nextAddress && nextAddress !== (profile.address ?? '')) {
+      payload.address = nextAddress;
+    }
+    if (language && language !== (profile.language ?? '')) {
+      payload.language = language;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      router.back();
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await useProfileStore.getState().updateProfile(payload);
+      router.back();
+    } catch {
+      // TODO(디자인 필요): 실패 시 보여줄 공통 오류 UI가 없어(기존 화면에도 토스트/Alert 패턴 없음) 화면에 머무는 것 외엔 처리하지 않는다.
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
