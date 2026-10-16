@@ -74,7 +74,9 @@ export default function CalculatorScreen() {
 
             <TouchableOpacity
               activeOpacity={0.85}
-              // 계산 규칙이 시안에 없어 스텁 처리 (TODO)
+              // TODO: 연결 지점. caseId를 얻을 수 없어(이 화면은 케이스 지정 없이 열리고 Case API도 미연동) 스텁으로 둔다.
+              // caseId가 정해지면 useBenefitStore.calculate(caseId, buildBenefitRequest({...입력 digits})) 호출,
+              // 진입 시 fetchBenefit(caseId)로 입력 칸·이력을 채우고 결과/이력은 benefitMapper로 표시용 변환.
               onPress={() => {}}
               className="items-center justify-center"
               style={{ height: 52, borderRadius: 14, backgroundColor: colors.primary }}
