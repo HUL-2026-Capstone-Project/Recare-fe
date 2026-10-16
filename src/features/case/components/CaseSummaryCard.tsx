@@ -5,7 +5,7 @@ import { CARD_SHADOW } from '@/features/case/constants';
 import type { SummaryTag } from '@/features/case/mocks';
 
 type CaseSummaryCardProps = {
-  caseNumber: string;
+  caseNumber?: string;
   status: string;
   statusBg: string;
   statusFg: string;
@@ -26,12 +26,16 @@ export function CaseSummaryCard({
   return (
     <View className="bg-white p-4" style={{ borderRadius: 20, ...CARD_SHADOW }}>
       <View className="flex-row justify-between items-center">
-        <Text
-          className="text-[11px] font-semibold"
-          style={{ color: colors.text3, letterSpacing: 0.3 }}
-        >
-          CASE · {caseNumber}
-        </Text>
+        {caseNumber ? (
+          <Text
+            className="text-[11px] font-semibold"
+            style={{ color: colors.text3, letterSpacing: 0.3 }}
+          >
+            CASE · {caseNumber}
+          </Text>
+        ) : (
+          <View />
+        )}
         <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: statusBg }}>
           <Text
             className="text-[12px] font-semibold"

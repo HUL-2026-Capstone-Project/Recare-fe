@@ -1,61 +1,37 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { useCaseStore } from '@/store/caseStore';
+import { formatIsoDate } from '../caseMapper';
+import { TOTAL_STEPS, getStatusPresentation, isClosedStatus } from '../statusMapper';
 
 type FilterKey = '전체' | '진행 중' | '종결';
-
-const FILTERS: { key: FilterKey; count: number }[] = [
-  { key: '전체', count: 3 },
-  { key: '진행 중', count: 2 },
-  { key: '종결', count: 1 },
-];
-
-const CASES = [
-  {
-    id: '2024-0312',
-    status: '심사 중',
-    statusBg: colors.chip.orangeBg,
-    statusFg: colors.chip.orangeFg,
-    title: '요추 추간판 탈출증',
-    date: '2024.01.15',
-    step: 3,
-    progressColor: colors.primary,
-  },
-  {
-    id: '2024-0289',
-    status: '접수 중',
-    statusBg: colors.chip.blueBg,
-    statusFg: colors.chip.blueFg,
-    title: '우측 손목 골절',
-    date: '2023.11.22',
-    step: 1,
-    progressColor: colors.primary,
-  },
-  {
-    id: '2023-0871',
-    status: '승인 · 종결',
-    statusBg: colors.chip.greenBg,
-    statusFg: colors.chip.greenFg,
-    title: '소음성 난청',
-    date: '2023.08.04',
-    step: 5,
-    progressColor: colors.success,
-  },
-] as const;
 
 export default function CasesScreen() {
   const { top } = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<FilterKey>('전체');
+  const cases = useCaseStore((state) => state.cases);
+  const fetchCases = useCaseStore((state) => state.fetchCases);
 
-  const filteredCases =
-    selectedFilter === '전체'
-      ? CASES
-      : selectedFilter === '진행 중'
-      ? CASES.filter(c => c.status !== '승인 · 종결')
-      : CASES.filter(c => c.status === '승인 · 종결');
+  // 탭 화면은 마운트된 채로 남으므로 포커스될 때마다 목록을 새로 받는다.
+  useFocusEffect(
+    useCallback(() => {
+      fetchCases();
+    }, [fetchCases])
+  );
+
+  // 목록은 한 번만 받고 필터/개수는 앱에서 계산한다("진행 중" = CLOSED가 아닌 모든 상태, 임시 가정).
+  const closedCases = cases.filter((c) => isClosedStatus(c.status));
+  const activeCases = cases.filter((c) => !isClosedStatus(c.status));
+  const FILTERS: { key: FilterKey; count: number }[] = [
+    { key: '전체', count: cases.length },
+    { key: '진행 중', count: activeCases.length },
+    { key: '종결', count: closedCases.length },
+  ];
+  const filteredCases = selectedFilter === '전체' ? cases : selectedFilter === '진행 중' ? activeCases : closedCases;
 
   // TODO: 사건 등록 화면 구현 후 연결
   const handleRegisterCase = () => {};
@@ -115,82 +91,95 @@ export default function CasesScreen() {
 
         {/* 케이스 목록 */}
         <View className="gap-3">
-          {filteredCases.map(c => (
-            <View
-              key={c.id}
-              className="bg-white p-4"
-              style={{ borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 16, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
-            >
-              {/* 케이스 번호 + 상태 배지 */}
-              <View className="flex-row justify-between items-start mb-3.5">
-                <Text
-                  className="text-[11px] font-semibold"
-                  style={{ color: colors.text3, letterSpacing: 0.3 }}
-                >
-                  CASE · {c.id}
-                </Text>
-                <View
-                  className="px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: c.statusBg }}
-                >
-                  <Text
-                    className="text-[12px] font-semibold"
-                    style={{ color: c.statusFg, letterSpacing: -0.2, lineHeight: 14 }}
+          {filteredCases.map(c => {
+            const presentation = getStatusPresentation(c.status);
+            return (
+              <View
+                key={c.id}
+                className="bg-white p-4"
+                style={{ borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 16, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
+              >
+                {/* 케이스 번호 + 상태 배지 */}
+                <View className="flex-row justify-between items-start mb-3.5">
+                  {c.caseNumber ? (
+                    <Text
+                      className="text-[11px] font-semibold"
+                      style={{ color: colors.text3, letterSpacing: 0.3 }}
+                    >
+                      CASE · {c.caseNumber}
+                    </Text>
+                  ) : (
+                    <View />
+                  )}
+                  <View
+                    className="px-3 py-1.5 rounded-full"
+                    style={{ backgroundColor: presentation.badgeBg }}
                   >
-                    {c.status}
-                  </Text>
+                    <Text
+                      className="text-[12px] font-semibold"
+                      style={{ color: presentation.badgeFg, letterSpacing: -0.2, lineHeight: 14 }}
+                    >
+                      {presentation.label}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* 제목 + 날짜 */}
+                <Text
+                  className="text-[16px] font-bold text-text1 mb-1"
+                  style={{ letterSpacing: -0.3 }}
+                >
+                  {c.title}
+                </Text>
+                <Text
+                  className="text-[12px] text-text2 mb-3"
+                  style={{ letterSpacing: -0.2 }}
+                >
+                  재해일 {formatIsoDate(c.accidentDate)}
+                </Text>
+
+                {/* 프로그레스 바 — 알 수 없는 status면 단계를 표시하지 않는다 */}
+                {presentation.step != null && (
+                  <View className="flex-row gap-1 mb-3">
+                    {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                      <View
+                        key={i}
+                        className="flex-1 rounded-sm"
+                        style={{
+                          height: 4,
+                          borderRadius: 2,
+                          backgroundColor: i < (presentation.step ?? 0) ? presentation.progressColor : colors.border,
+                        }}
+                      />
+                    ))}
+                  </View>
+                )}
+
+                {/* 단계 + 자세히보기 */}
+                <View className="flex-row justify-between items-center">
+                  {presentation.step != null ? (
+                    <Text className="text-[12px]" style={{ letterSpacing: -0.2 }}>
+                      <Text style={{ color: presentation.progressColor, fontWeight: '700' }}>{presentation.step}</Text>
+                      <Text style={{ color: colors.text3 }}> / {TOTAL_STEPS} 단계</Text>
+                    </Text>
+                  ) : (
+                    <View />
+                  )}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => router.push(`/case-detail/${c.id}`)}
+                  >
+                    <Text
+                      className="text-[13px] text-primary font-bold"
+                      style={{ letterSpacing: -0.3 }}
+                    >
+                      상세보기 ›
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-
-              {/* 제목 + 날짜 */}
-              <Text
-                className="text-[16px] font-bold text-text1 mb-1"
-                style={{ letterSpacing: -0.3 }}
-              >
-                {c.title}
-              </Text>
-              <Text
-                className="text-[12px] text-text2 mb-3"
-                style={{ letterSpacing: -0.2 }}
-              >
-                재해일 {c.date}
-              </Text>
-
-              {/* 프로그레스 바 */}
-              <View className="flex-row gap-1 mb-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <View
-                    key={i}
-                    className="flex-1 rounded-sm"
-                    style={{
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: i < c.step ? c.progressColor : colors.border,
-                    }}
-                  />
-                ))}
-              </View>
-
-              {/* 단계 + 자세히보기 */}
-              <View className="flex-row justify-between items-center">
-                <Text className="text-[12px]" style={{ letterSpacing: -0.2 }}>
-                  <Text style={{ color: c.progressColor, fontWeight: '700' }}>{c.step}</Text>
-                  <Text style={{ color: colors.text3 }}> / 5 단계</Text>
-                </Text>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => router.push(`/case-detail/${c.id}`)}
-                >
-                  <Text
-                    className="text-[13px] text-primary font-bold"
-                    style={{ letterSpacing: -0.3 }}
-                  >
-                    상세보기 ›
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
 

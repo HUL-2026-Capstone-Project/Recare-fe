@@ -4,6 +4,7 @@ import { authApi } from '@/api/authApi';
 import type { ApiError } from '@/api/types';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { setForceLogoutHandler } from './authEvents';
+import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
 import { useProfileStore } from './profileStore';
 
@@ -59,6 +60,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await tokenStorage.clear();
       useChatStore.getState().reset();
       useProfileStore.getState().reset();
+      useCaseStore.getState().reset();
       set({ status: 'unauthenticated' });
     }
   },
