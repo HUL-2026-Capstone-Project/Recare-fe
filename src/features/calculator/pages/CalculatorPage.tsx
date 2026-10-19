@@ -74,9 +74,9 @@ export default function CalculatorScreen() {
 
             <TouchableOpacity
               activeOpacity={0.85}
-              // TODO: 연결 지점. caseId를 얻을 수 없어(이 화면은 케이스 지정 없이 열리고 Case API도 미연동) 스텁으로 둔다.
-              // caseId가 정해지면 useBenefitStore.calculate(caseId, buildBenefitRequest({...입력 digits})) 호출,
-              // 진입 시 fetchBenefit(caseId)로 입력 칸·이력을 채우고 결과/이력은 benefitMapper로 표시용 변환.
+              // TODO: 케이스 id는 caseStore에서 얻을 수 있으나, 어떤 케이스로 계산할지, 케이스 없는 계산 방식,
+              // 평균 임금 매핑이 정해지지 않아 화면은 아직 목 데이터 상태다. 정해지면 useBenefitStore.calculate(caseId,
+              // buildBenefitRequest({...입력 digits}))를 호출하고, 진입 시 fetchBenefit(caseId)로 입력 칸·이력을 채운다.
               onPress={() => {}}
               className="items-center justify-center"
               style={{ height: 52, borderRadius: 14, backgroundColor: colors.primary }}

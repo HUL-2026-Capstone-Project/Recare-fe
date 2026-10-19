@@ -27,7 +27,7 @@ type BenefitState = {
 let requestSeq = 0;
 
 // 임금·요양기간·계산 금액은 메모리(zustand)에만 둔다. 저장소에 쓰지 않고 로그로도 남기지 않는다.
-// 로그아웃 시 reset()을 호출해야 한다(화면 연결 시 authStore.logout과 함께 처리 필요).
+// 로그아웃(사용자/강제) 시 authStore가 reset()을 호출해 비운다.
 export const useBenefitStore = create<BenefitState>((set) => ({
   input: null,
   result: null,
