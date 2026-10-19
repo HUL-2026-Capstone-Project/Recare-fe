@@ -4,6 +4,7 @@ import { authApi } from '@/api/authApi';
 import type { ApiError } from '@/api/types';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { setForceLogoutHandler } from './authEvents';
+import { useBenefitStore } from './benefitStore';
 import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
 import { useProfileStore } from './profileStore';
@@ -16,6 +17,14 @@ type AuthState = {
   login: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
+
+// 로그아웃(사용자/강제) 시 메모리에 남은 개인 정보가 다음 로그인으로 넘어가지 않도록 스토어를 비운다.
+function clearSessionData() {
+  useChatStore.getState().reset();
+  useProfileStore.getState().reset();
+  useCaseStore.getState().reset();
+  useBenefitStore.getState().reset();
+}
 
 export const useAuthStore = create<AuthState>((set) => ({
   status: 'loading',
@@ -58,14 +67,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       // 서버 로그아웃 실패 여부와 무관하게 로컬 로그아웃은 진행한다.
     } finally {
       await tokenStorage.clear();
-      useChatStore.getState().reset();
-      useProfileStore.getState().reset();
-      useCaseStore.getState().reset();
+      clearSessionData();
       set({ status: 'unauthenticated' });
     }
   },
 }));
 
+// 토큰 재발급 실패로 인한 강제 로그아웃은 logout()을 거치지 않으므로 같은 초기화를 직접 한다.
 setForceLogoutHandler(() => {
+  clearSessionData();
   useAuthStore.setState({ status: 'unauthenticated' });
 });
