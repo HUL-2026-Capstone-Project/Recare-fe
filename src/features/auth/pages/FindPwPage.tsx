@@ -47,6 +47,12 @@ export default function FindPwScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // 비밀번호 재설정 흐름의 첫 화면. reset-password로 push할 때는 이 화면이 스택에 남아 호출되지 않고,
+  // 뒤로가기·아이디 찾기로 replace·로그인까지 dismissTo로 흐름을 벗어나면 언마운트되며 resetToken을 비운다.
+  useEffect(() => {
+    return () => useResetPasswordStore.getState().clear();
+  }, []);
+
   useEffect(() => {
     if (!phoneTimerActive) return;
     const id = setInterval(() => {

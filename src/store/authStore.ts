@@ -7,6 +7,7 @@ import { setForceLogoutHandler } from './authEvents';
 import { useBenefitStore } from './benefitStore';
 import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
+import { useHospitalStore } from './hospitalStore';
 import { useProfileStore } from './profileStore';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -24,6 +25,7 @@ function clearSessionData() {
   useProfileStore.getState().reset();
   useCaseStore.getState().reset();
   useBenefitStore.getState().reset();
+  useHospitalStore.getState().reset();
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
