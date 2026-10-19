@@ -65,6 +65,12 @@ export default function SignUpInfoScreen() {
 
   const isResidentValid = isResidentFrontValid(residentFront) && isResidentBackValid(residentBack);
 
+  // 회원가입 첫 화면이 언마운트되는 시점이 곧 흐름을 벗어나는 시점이다(다음 단계로 push할 때는 이 화면이 스택에 남아
+  // 있어 호출되지 않으므로 단계 이동 중 값은 유지된다). 비밀번호·주민번호 입력값 등 draft를 메모리에서 비운다.
+  useEffect(() => {
+    return () => useSignupStore.getState().reset();
+  }, []);
+
   useEffect(() => {
     if (!timerActive) return;
     const id = setInterval(() => {

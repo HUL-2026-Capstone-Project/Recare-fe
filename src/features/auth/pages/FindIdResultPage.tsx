@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -8,6 +9,12 @@ import { useFindIdStore } from '@/store/findIdStore';
 export default function FindIdResultScreen() {
   const { top } = useSafeAreaInsets();
   const accounts = useFindIdStore((state) => state.accounts);
+
+  // 결과는 이 화면에서만 쓴다. "로그인하기"는 router.replace라 앞 화면(find-id)이 스택에 남으므로 첫 화면이 아니라
+  // 이 화면이 언마운트될 때(뒤로가기·replace·dismiss) 아이디 목록을 비운다. find-pw로 push할 때는 스택에 남아 유지된다.
+  useEffect(() => {
+    return () => useFindIdStore.getState().reset();
+  }, []);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>

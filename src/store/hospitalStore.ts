@@ -20,6 +20,7 @@ type HospitalState = {
   isLoadingMore: boolean;
   searchHospitals: (params: SearchParams) => Promise<void>;
   loadMoreHospitals: () => Promise<void>;
+  reset: () => void;
 };
 
 // 요청이 겹칠 때 오래된 응답이 최신 결과를 덮어쓰지 않도록 쓰는 전역 요청 식별값.
@@ -82,5 +83,12 @@ export const useHospitalStore = create<HospitalState>((set, get) => ({
       // TODO: 추가 페이지 요청이 실패하면 조용히 멈추고, 다음에 목록 끝에 닿을 때 다시 시도하게 한다.
       if (seq === requestSeq) set({ isLoadingMore: false });
     }
+  },
+
+  // 마지막 검색어·위치 좌표(lastSearchParams)까지 비운다. 진행 중이던 요청의 응답은 requestSeq로 버린다.
+  reset: () => {
+    requestSeq += 1;
+    lastSearchParams = {};
+    set({ hospitals: [], total: 0, status: 'idle', errorMessage: null, page: 0, isLast: false, isLoadingMore: false });
   },
 }));
