@@ -9,7 +9,10 @@ export type HospitalResponse = {
   postalCode?: string | null;
   address: string;
   phone?: string | null;
+  // 스웨거에 아직 남아 있는 쉼표로 이은 문자열. 앱은 specialties 배열을 쓴다.
   specialty?: string | null;
+  specialties?: string[] | null;
+  hospitalType?: string | null;
   supportsCompensation: boolean;
   latitude?: number | null;
   longitude?: number | null;
@@ -31,7 +34,9 @@ export type PageHospitalResponse = {
 export type HospitalSearchParams = {
   keyword?: string;
   isDesignated?: boolean;
-  specialty?: string;
+  // 여러 개면 하나라도 맞는 병원(OR). 같은 이름으로 반복해 보낸다.
+  specialty?: string[];
+  hospitalType?: string[];
   lat?: number;
   lng?: number;
   radiusKm?: number;
@@ -41,7 +46,11 @@ export type HospitalSearchParams = {
 
 export const hospitalApi = {
   async searchHospitals(params: HospitalSearchParams = {}): Promise<PageHospitalResponse> {
-    const { data } = await apiClient.get<PageHospitalResponse>('/api/v1/hospitals', { params });
+    const { data } = await apiClient.get<PageHospitalResponse>('/api/v1/hospitals', {
+      params,
+      // 배열은 specialty[]=a 가 아니라 specialty=a&specialty=b 로 보낸다(스웨거 설명).
+      paramsSerializer: { indexes: null },
+    });
     return data;
   },
 

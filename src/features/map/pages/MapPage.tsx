@@ -31,7 +31,6 @@ export default function MapPage() {
   const [keyword, setKeyword] = useState('');
   const mapRef = useRef<NaverMapViewRef>(null);
   const location = useCurrentLocation();
-  const { isDesignated, specialty } = toSearchFilter(selectedFilters);
 
   useEffect(() => {
     // 위치가 확정되기 전에는 검색하지 않는다 — 대체 좌표로 먼저 검색했다가 다시 검색하는 중복을 막는다.
@@ -43,12 +42,11 @@ export default function MapPage() {
         lat: location.latitude,
         lng: location.longitude,
         radiusKm: SEARCH_RADIUS_KM,
-        isDesignated,
-        specialty,
+        ...toSearchFilter(selectedFilters),
       });
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [keyword, isDesignated, specialty, location.isResolved, location.latitude, location.longitude, searchHospitals]);
+  }, [keyword, selectedFilters, location.isResolved, location.latitude, location.longitude, searchHospitals]);
 
   // 검색 조건(필터·검색어)이 바뀌어 선택한 병원이 새 목록에 없으면 상세 시트를 닫는다.
   useEffect(() => {
