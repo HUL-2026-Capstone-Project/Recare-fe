@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -12,11 +12,14 @@ import { ProfileCard } from '../components/ProfileCard';
 import { StatsRow } from '../components/StatsRow';
 import { AccountMenuCard } from '../components/AccountMenuCard';
 import { PolicyMenuCard } from '../components/PolicyMenuCard';
+import { WithdrawModal } from '../components/WithdrawModal';
 import { APP_VERSION, myMock } from '../mocks';
 
 export default function MyPage() {
   const { top, bottom } = useSafeAreaInsets();
   const logout = useAuthStore((state) => state.logout);
+  const withdraw = useAuthStore((state) => state.withdraw);
+  const [withdrawVisible, setWithdrawVisible] = useState(false);
   const profile = useProfileStore((state) => state.profile);
   const fetchProfile = useProfileStore((state) => state.fetchProfile);
   const toastMessage = useToastStore((state) => state.message);
@@ -79,8 +82,7 @@ export default function MyPage() {
           </Pressable>
           <View style={{ width: 1, height: 11, backgroundColor: colors.border }} />
           <Pressable
-            // 회원탈퇴 확인 모달이 시안에 없어 스텁 처리 (TODO)
-            onPress={() => {}}
+            onPress={() => setWithdrawVisible(true)}
             style={{ paddingHorizontal: 14 }}
           >
             <Text style={{ fontSize: 12, fontWeight: '500', color: colors.danger, letterSpacing: -0.3 }}>
@@ -107,6 +109,8 @@ export default function MyPage() {
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: -0.3 }}>{toastMessage}</Text>
         </View>
       )}
+
+      <WithdrawModal visible={withdrawVisible} onClose={() => setWithdrawVisible(false)} onConfirm={withdraw} />
     </View>
   );
 }
