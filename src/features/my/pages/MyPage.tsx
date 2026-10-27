@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { useAuthStore } from '@/store/authStore';
+import { useCaseStore } from '@/store/caseStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useToastStore } from '@/store/toastStore';
 import { ProfileCard } from '../components/ProfileCard';
@@ -23,6 +24,18 @@ export default function MyPage() {
   useEffect(() => {
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
+
+  // 진행 케이스 수는 케이스 목록(progress.group이 ACTIVE)에서 센다. 아직 한 번도 불러오지 않았을 때만 불러온다.
+  // 제출 서류·받은 알림 수는 서버에서 채울 수 없어 통계에서 그리지 않는다.
+  const cases = useCaseStore((state) => state.cases);
+  const listStatus = useCaseStore((state) => state.listStatus);
+  const fetchCases = useCaseStore((state) => state.fetchCases);
+  const hasCaseList = listStatus === 'success' || cases.length > 0;
+  const activeCaseCount = cases.filter((c) => c.progress.group === 'ACTIVE').length;
+
+  useEffect(() => {
+    if (listStatus === 'idle') fetchCases();
+  }, [listStatus, fetchCases]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -43,12 +56,7 @@ export default function MyPage() {
           email={profile?.email ?? ''}
           onPress={() => router.push('/profile')}
         />
-        <StatsRow
-          stats={myMock.stats.map((stat) => ({
-            ...stat,
-            onPress: stat.id === 'notifications' ? () => router.push('/notifications') : undefined,
-          }))}
-        />
+        {hasCaseList && <StatsRow stats={[{ value: String(activeCaseCount), label: '진행 케이스' }]} />}
         <AccountMenuCard items={myMock.accountMenu} />
         <PolicyMenuCard items={myMock.policyMenu} />
 
