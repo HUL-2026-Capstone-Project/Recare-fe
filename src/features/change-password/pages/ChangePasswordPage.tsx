@@ -9,7 +9,11 @@ import { authApi } from '@/api/authApi';
 import type { ApiError } from '@/api/types';
 import { svgAssetUri } from '@/shared/lib/svgAsset';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
+import { useAuthStore } from '@/store/authStore';
 import { useToastStore } from '@/store/toastStore';
+
+const CURRENT_PASSWORD_MISMATCH_MESSAGE = '현재 비밀번호가 일치하지 않습니다.';
+const CHANGED_NOTICE = '비밀번호가 변경됐어요. 다시 로그인해 주세요.';
 
 // 스웨거 PasswordChangeRequest.newPassword pattern (비밀번호 재설정과 동일한 규칙)
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -44,11 +48,13 @@ export default function ChangePasswordScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [currentFocused, setCurrentFocused] = useState(false);
   const [currentVisible, setCurrentVisible] = useState(false);
-  const [currentError, setCurrentError] = useState(false);
+  // 서버가 준 오류 문구. 값이 있으면 해당 칸 아래에 보인다.
+  const [currentError, setCurrentError] = useState<string | null>(null);
 
   const [newPassword, setNewPassword] = useState('');
   const [newFocused, setNewFocused] = useState(false);
   const [newVisible, setNewVisible] = useState(false);
+  const [newError, setNewError] = useState<string | null>(null);
 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [confirmFocused, setConfirmFocused] = useState(false);
@@ -60,12 +66,13 @@ export default function ChangePasswordScreen() {
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   const ruleTone: RuleTone = newPassword === '' ? 'muted' : PASSWORD_PATTERN.test(newPassword) ? 'success' : 'danger';
-  const isWeak = ruleTone === 'danger';
+  const isWeak = ruleTone === 'danger' || newError !== null;
   const isMismatch = confirmTouched && confirmPassword !== '' && confirmPassword !== newPassword;
   const ready = currentPassword !== '' && PASSWORD_PATTERN.test(newPassword) && confirmPassword !== '' && confirmPassword === newPassword;
 
   const clearErrors = () => {
-    if (currentError) setCurrentError(false);
+    if (currentError) setCurrentError(null);
+    if (newError) setNewError(null);
     if (generalError) setGeneralError(null);
   };
 
@@ -75,16 +82,25 @@ export default function ChangePasswordScreen() {
     setIsSubmitting(true);
     try {
       await authApi.changePassword({ currentPassword, newPassword });
-      useToastStore.getState().show('비밀번호가 변경되었어요');
-      router.back();
+      // 서버가 모든 기기의 refresh 토큰을 무효화하므로 서버 로그아웃 호출 없이 로컬 세션만 끝낸다.
+      // 안내는 시작 화면에서 보인다(토스트 스토어는 로컬 정리로 초기화되지 않는다).
+      useToastStore.getState().show(CHANGED_NOTICE);
+      await useAuthStore.getState().endSessionLocally();
     } catch (e) {
-      // 현재 비밀번호 불일치를 구분하는 상태 코드/에러 코드가 스웨거에 없어, fieldErrors에 currentPassword 필드가
-      // 오는 경우에만(관례상 가능성이 높은 형태) 전용 문구를 쓰고, 그 외에는 일반 오류로 처리한다. 실제 응답 형태는
-      // 수동 테스트로 확인이 필요하다.
+      // 백엔드 답변 기준(스웨거에는 200 외 응답이 문서화돼 있지 않다):
+      // - 400 + fieldErrors.newPassword: 새 비밀번호 칸에 서버 문구
+      // - 401: 현재 비밀번호 칸에 서버 message(없으면 기본 문구). client.ts가 재발급 후 한 번 재시도한 뒤 같은 에러를 넘긴다.
+      // - 현재 비밀번호 필드 오류(fieldErrors.currentPassword)도 같은 칸에 보인다. 그 외는 일반 오류.
       const apiError = e as ApiError;
-      const currentPasswordFieldError = apiError.fieldErrors?.find((fe) => fe.field === 'currentPassword');
-      if (currentPasswordFieldError) {
-        setCurrentError(true);
+      const fieldError = (field: string) => apiError.fieldErrors?.find((fe) => fe.field === field);
+      const newPasswordFieldError = apiError.status === 400 ? fieldError('newPassword') : undefined;
+      const currentPasswordFieldError = fieldError('currentPassword');
+      if (newPasswordFieldError) {
+        setNewError(newPasswordFieldError.message || '새 비밀번호를 확인해 주세요');
+      } else if (apiError.status === 401) {
+        setCurrentError(apiError.message || CURRENT_PASSWORD_MISMATCH_MESSAGE);
+      } else if (currentPasswordFieldError) {
+        setCurrentError(currentPasswordFieldError.message || CURRENT_PASSWORD_MISMATCH_MESSAGE);
       } else {
         setGeneralError('비밀번호 변경에 실패했어요. 잠시 후 다시 시도해주세요');
       }
@@ -137,7 +153,7 @@ export default function ChangePasswordScreen() {
             </View>
             {currentError && (
               <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
-                현재 비밀번호가 맞지 않아요
+                {currentError}
               </Text>
             )}
           </View>
@@ -174,6 +190,11 @@ export default function ChangePasswordScreen() {
                 <Image source={require('@/shared/assets/icons/eye.png')} style={{ width: 20, height: 20 }} />
               </TouchableOpacity>
             </View>
+            {newError && (
+              <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                {newError}
+              </Text>
+            )}
             <PwRuleHint tone={ruleTone} />
           </View>
 

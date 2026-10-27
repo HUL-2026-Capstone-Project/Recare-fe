@@ -5,9 +5,12 @@ import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/shared/constants/colors';
+import { useToastStore } from '@/store/toastStore';
 
 export default function SplashScreen() {
-  const { bottom } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
+  // 비밀번호 변경 후 로그아웃되어 이 화면으로 올 때 보여주는 안내(기존 토스트 스토어 사용).
+  const toastMessage = useToastStore((state) => state.message);
 
   return (
     <>
@@ -81,6 +84,16 @@ export default function SplashScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {toastMessage && (
+          <View
+            pointerEvents="none"
+            className="absolute left-5 right-5 rounded-xl items-center"
+            style={{ top: top + 16, backgroundColor: colors.text1, paddingVertical: 12 }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: -0.3 }}>{toastMessage}</Text>
+          </View>
+        )}
       </LinearGradient>
     </>
   );
