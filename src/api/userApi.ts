@@ -23,6 +23,13 @@ export type UserUpdateRequest = Partial<{
   email: string;
 }>;
 
+// 스웨거 MyStatsResponse. 세 항목 모두 required이고 없으면 null이 아니라 0이다(서류·알림은 기능이 생기기 전까지 항상 0).
+export type MyStatsResponse = {
+  activeCaseCount: number;
+  submittedDocumentCount: number;
+  notificationCount: number;
+};
+
 export const userApi = {
   async getMyProfile(): Promise<UserResponse> {
     const { data } = await apiClient.get<UserResponse>('/api/v1/users/my');
@@ -31,6 +38,11 @@ export const userApi = {
 
   async updateProfile(payload: UserUpdateRequest): Promise<UserResponse> {
     const { data } = await apiClient.patch<UserResponse>('/api/v1/users/infochange', payload);
+    return data;
+  },
+
+  async getMyStats(): Promise<MyStatsResponse> {
+    const { data } = await apiClient.get<MyStatsResponse>('/api/v1/users/my/stats');
     return data;
   },
 };

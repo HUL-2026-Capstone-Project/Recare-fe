@@ -8,6 +8,7 @@ import { useBenefitStore } from './benefitStore';
 import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
 import { useHospitalStore } from './hospitalStore';
+import { useMyStatsStore } from './myStatsStore';
 import { useProfileStore } from './profileStore';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -26,6 +27,7 @@ function clearSessionData() {
   useCaseStore.getState().reset();
   useBenefitStore.getState().reset();
   useHospitalStore.getState().reset();
+  useMyStatsStore.getState().reset();
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
