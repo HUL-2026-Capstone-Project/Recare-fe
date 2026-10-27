@@ -5,7 +5,7 @@ import { colors } from '@/shared/constants/colors';
 import type { Section } from '@/store/caseProgressStore';
 import { PRIORITY_CHIPS, getDueInfo, todayLocalIso } from '../progressFormat';
 import { TodoCheck } from './CheckMarks';
-import { Chip, SectionCard, SectionEmpty, SectionError, SectionSkeleton, SectionTitle } from './CaseSectionParts';
+import { AddButton, Chip, SectionCard, SectionEmpty, SectionError, SectionSkeleton, SectionTitle } from './CaseSectionParts';
 
 function CheckCircle({ status, onPress }: { status: TodoResponse['status']; onPress: () => void }) {
   return (
@@ -31,7 +31,7 @@ function CheckCircle({ status, onPress }: { status: TodoResponse['status']; onPr
   );
 }
 
-function TodoRow({ todo, isFirst, isLast, todayIso, onToggle }: { todo: TodoResponse; isFirst: boolean; isLast: boolean; todayIso: string; onToggle: () => void }) {
+function TodoRow({ todo, isFirst, isLast, todayIso, onToggle, onEdit }: { todo: TodoResponse; isFirst: boolean; isLast: boolean; todayIso: string; onToggle: () => void; onEdit: () => void }) {
   const done = todo.status === 'DONE';
   const priority = PRIORITY_CHIPS[todo.priority];
   const due = getDueInfo(todo.dueDate, done, todayIso);
@@ -48,7 +48,8 @@ function TodoRow({ todo, isFirst, isLast, todayIso, onToggle }: { todo: TodoResp
       }}
     >
       <CheckCircle status={todo.status} onPress={onToggle} />
-      <View style={{ flex: 1 }}>
+      {/* 체크 원을 뺀 본문(제목, 설명, 칩 줄)을 누르면 수정 시트가 열린다. */}
+      <Pressable onPress={onEdit} style={{ flex: 1 }}>
         <Text
           numberOfLines={2}
           ellipsizeMode="tail"
@@ -65,12 +66,24 @@ function TodoRow({ todo, isFirst, isLast, todayIso, onToggle }: { todo: TodoResp
           {priority && <Chip label={priority.label} bg={done ? colors.chip.grayBg : priority.bg} fg={done ? colors.chip.grayFg : priority.fg} />}
           {due && <Text style={{ fontSize: 11, fontWeight: '500', letterSpacing: -0.2, color: due.color }}>{due.text}</Text>}
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
 
-export function CaseTodoSection({ section, onToggle, onRetry }: { section: Section<TodoResponse>; onToggle: (todoId: number) => void; onRetry: () => void }) {
+export function CaseTodoSection({
+  section,
+  onToggle,
+  onRetry,
+  onAdd,
+  onEdit,
+}: {
+  section: Section<TodoResponse>;
+  onToggle: (todoId: number) => void;
+  onRetry: () => void;
+  onAdd: () => void;
+  onEdit: (todo: TodoResponse) => void;
+}) {
   const loaded = section.status === 'loaded';
   const doneCount = section.items.filter((todo) => todo.status === 'DONE').length;
   const todayIso = todayLocalIso();
@@ -81,7 +94,7 @@ export function CaseTodoSection({ section, onToggle, onRetry }: { section: Secti
   } else if (!loaded) {
     content = <SectionSkeleton />;
   } else if (section.items.length === 0) {
-    content = <SectionEmpty text="등록된 할 일이 없어요" />;
+    content = <SectionEmpty text="등록된 할 일이 없어요" cta={{ label: '할 일 추가하기', onPress: onAdd }} />;
   } else {
     content = (
       <SectionCard>
@@ -93,6 +106,7 @@ export function CaseTodoSection({ section, onToggle, onRetry }: { section: Secti
             isLast={index === section.items.length - 1}
             todayIso={todayIso}
             onToggle={() => onToggle(todo.id)}
+            onEdit={() => onEdit(todo)}
           />
         ))}
       </SectionCard>
@@ -101,7 +115,19 @@ export function CaseTodoSection({ section, onToggle, onRetry }: { section: Secti
 
   return (
     <View>
-      <SectionTitle title="할 일" right={loaded ? `${doneCount} / ${section.items.length}` : undefined} />
+      <SectionTitle
+        title="할 일"
+        right={
+          <View className="flex-row items-center" style={{ gap: 12 }}>
+            {loaded && (
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text2, letterSpacing: -0.2 }}>
+                {doneCount} / {section.items.length}
+              </Text>
+            )}
+            <AddButton onPress={onAdd} />
+          </View>
+        }
+      />
       {content}
     </View>
   );

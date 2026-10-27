@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { caseApi } from '@/api/caseApi';
-import type { CaseResponse, CaseSummaryResponse, CreateCaseRequest, UpdateCaseRequest } from '@/api/caseApi';
+import type { CaseResponse, CaseStatus as CaseStatusCode, CaseSummaryResponse, CreateCaseRequest, UpdateCaseRequest } from '@/api/caseApi';
 import { getErrorMessage } from '@/api/errorMessage';
 import type { ApiError } from '@/api/types';
 
@@ -49,6 +49,8 @@ type CaseState = {
   fetchCase: (id: number) => Promise<void>;
   createCase: (request: CreateCaseRequest) => Promise<CaseResponse | null>;
   updateCase: (id: number, request: UpdateCaseRequest) => Promise<CaseResponse | null>;
+  // 케이스 상태 변경. 응답(progress 포함)을 상세와 목록에 반영한다. 성공하면 true.
+  changeStatus: (id: number, status: CaseStatusCode) => Promise<boolean>;
   reset: () => void;
 };
 
@@ -56,6 +58,7 @@ type CaseState = {
 let listSeq = 0;
 const detailSeqs: Record<number, number> = {};
 let saveSeq = 0;
+let resetGeneration = 0;
 
 // 케이스 내용은 개인 건강/사고 정보라 메모리(zustand)에만 두고 저장소·로그에 남기지 않는다.
 export const useCaseStore = create<CaseState>((set) => ({
@@ -133,7 +136,25 @@ export const useCaseStore = create<CaseState>((set) => ({
     }
   },
 
+  changeStatus: async (id, status) => {
+    const generation = resetGeneration;
+    try {
+      const updated = await caseApi.changeCaseStatus(id, status);
+      if (generation !== resetGeneration) return true;
+      // 진행 중인 상세 조회가 변경 이전 값으로 덮어쓰지 않게 무효화한다.
+      detailSeqs[id] = (detailSeqs[id] ?? 0) + 1;
+      set((state) => ({
+        cases: state.cases.map((item) => (item.id === id ? toSummaryItem(updated) : item)),
+        details: { ...state.details, [id]: updated },
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   reset: () => {
+    resetGeneration += 1;
     saveSeq += 1;
     listSeq += 1;
     for (const key of Object.keys(detailSeqs)) detailSeqs[Number(key)] += 1;

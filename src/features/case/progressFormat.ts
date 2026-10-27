@@ -1,4 +1,4 @@
-import type { TimelineStepType, TodoPriority } from '@/api/caseApi';
+import type { TimelineStepStatus, TimelineStepType, TodoPriority, TodoStatus } from '@/api/caseApi';
 import { colors } from '@/shared/constants/colors';
 
 // 날짜 문자열(yyyy-MM-dd)은 Date로 파싱하지 않고 문자열로 직접 다룬다(시간대 문제).
@@ -57,3 +57,39 @@ export const PRIORITY_CHIPS: Record<TodoPriority, { label: string; bg: string; f
   MEDIUM: { label: '보통', bg: colors.chip.orangeBg, fg: colors.chip.orangeFg },
   LOW: { label: '낮음', bg: colors.chip.grayBg, fg: colors.chip.grayFg },
 };
+
+// 편집 시트의 선택지(시안 순서). 종류 라벨은 STEP_TYPE_LABELS와 같다.
+export const STEP_TYPE_OPTIONS: { value: TimelineStepType; label: string }[] = (
+  ['DIAGNOSIS', 'DOCUMENT_PREP', 'APPLICATION', 'REVIEW', 'DECISION', 'TREATMENT', 'BENEFIT', 'CLOSED', 'ETC'] as const
+).map((value) => ({ value, label: STEP_TYPE_LABELS[value] }));
+
+export const STEP_STATUS_OPTIONS: { value: TimelineStepStatus; label: string }[] = [
+  { value: 'PENDING', label: '대기' },
+  { value: 'IN_PROGRESS', label: '진행 중' },
+  { value: 'DONE', label: '완료' },
+  { value: 'SKIPPED', label: '건너뜀' },
+];
+
+export const PRIORITY_OPTIONS: { value: TodoPriority; label: string }[] = [
+  { value: 'HIGH', label: '높음' },
+  { value: 'MEDIUM', label: '보통' },
+  { value: 'LOW', label: '낮음' },
+];
+
+export const TODO_STATUS_OPTIONS: { value: TodoStatus; label: string }[] = [
+  { value: 'TODO', label: '할 일' },
+  { value: 'IN_PROGRESS', label: '진행 중' },
+  { value: 'DONE', label: '완료' },
+];
+
+// 상태 변경 시트의 목록(시안 순서와 라벨)
+export const CASE_STATUS_OPTIONS = [
+  { value: 'DRAFT', label: '작성 중' },
+  { value: 'PREPARING', label: '서류 준비 중' },
+  { value: 'SUBMITTED', label: '접수 완료' },
+  { value: 'UNDER_REVIEW', label: '심사 중' },
+  { value: 'APPROVED', label: '승인' },
+  { value: 'IN_TREATMENT', label: '요양 중' },
+  { value: 'REJECTED', label: '불승인' },
+  { value: 'CLOSED', label: '종결' },
+] as const;

@@ -11,6 +11,10 @@ import { CaseSummaryCard } from '@/features/case/components/CaseSummaryCard';
 import { ActionToast } from '@/features/case/components/ActionToast';
 import { CaseTimelineSection } from '@/features/case/components/CaseTimelineSection';
 import { CaseTodoSection } from '@/features/case/components/CaseTodoSection';
+import { CaseStatusSheet } from '@/features/case/components/CaseStatusSheet';
+import { TimelineEditSheet } from '@/features/case/components/TimelineEditSheet';
+import { TodoEditSheet } from '@/features/case/components/TodoEditSheet';
+import type { TimelineResponse, TodoResponse } from '@/api/caseApi';
 import { toSummaryCardProps } from '@/features/case/caseMapper';
 
 // 서버 상세로 채울 수 있는 요약 영역만 보여준다. 타임라인·할 일은 다음 작업에서 연결하고,
@@ -29,6 +33,10 @@ export default function CaseDetailScreen() {
   const toggleTodo = useCaseProgressStore((state) => state.toggleTodo);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 열려 있는 시트. 열 때마다 새로 마운트되어 입력값이 매번 초기화된다(item이 null이면 추가).
+  const [timelineSheet, setTimelineSheet] = useState<{ item: TimelineResponse | null } | null>(null);
+  const [todoSheet, setTodoSheet] = useState<{ item: TodoResponse | null } | null>(null);
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!Number.isFinite(caseId)) return;
@@ -45,15 +53,18 @@ export default function CaseDetailScreen() {
     []
   );
 
+  const showFailureToast = useCallback(() => {
+    setToastMessage('변경하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
   const handleToggle = useCallback(
     async (todoId: number) => {
       const result = await toggleTodo(caseId, todoId);
-      if (result !== 'failed') return;
-      setToastMessage('변경하지 못했어요. 잠시 후 다시 시도해 주세요.');
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-      toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+      if (result === 'failed') showFailureToast();
     },
-    [caseId, toggleTodo]
+    [caseId, toggleTodo, showFailureToast]
   );
 
   return (
@@ -75,13 +86,28 @@ export default function CaseDetailScreen() {
       >
         {detail && (
           <>
-            <CaseSummaryCard {...toSummaryCardProps(detail)} />
-            <CaseTimelineSection section={timeline} progress={detail.progress} onRetry={() => loadTimeline(caseId)} />
-            <CaseTodoSection section={todos} onToggle={handleToggle} onRetry={() => loadTodos(caseId)} />
+            <CaseSummaryCard {...toSummaryCardProps(detail)} onPressStatus={() => setStatusSheetOpen(true)} />
+            <CaseTimelineSection
+              section={timeline}
+              progress={detail.progress}
+              onRetry={() => loadTimeline(caseId)}
+              onAdd={() => setTimelineSheet({ item: null })}
+              onEdit={(item) => setTimelineSheet({ item })}
+            />
+            <CaseTodoSection
+              section={todos}
+              onToggle={handleToggle}
+              onRetry={() => loadTodos(caseId)}
+              onAdd={() => setTodoSheet({ item: null })}
+              onEdit={(item) => setTodoSheet({ item })}
+            />
           </>
         )}
       </ScrollView>
       <ActionToast message={toastMessage} />
+      {timelineSheet && <TimelineEditSheet caseId={caseId} item={timelineSheet.item} onClose={() => setTimelineSheet(null)} />}
+      {todoSheet && <TodoEditSheet caseId={caseId} item={todoSheet.item} onClose={() => setTodoSheet(null)} onDeleteFailed={showFailureToast} />}
+      {statusSheetOpen && detail && <CaseStatusSheet caseId={caseId} current={detail.status} onClose={() => setStatusSheetOpen(false)} />}
     </View>
   );
 }

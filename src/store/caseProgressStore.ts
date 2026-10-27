@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 
 import { caseApi } from '@/api/caseApi';
-import type { TimelineResponse, TodoResponse, TodoStatus } from '@/api/caseApi';
+import type {
+  CreateTimelineRequest,
+  CreateTodoRequest,
+  TimelineResponse,
+  TodoResponse,
+  TodoStatus,
+  UpdateTimelineRequest,
+  UpdateTodoRequest,
+} from '@/api/caseApi';
 
 // loading은 보여줄 데이터가 없는 처음 로딩이다. 이미 받아 둔 데이터가 있으면 다시 불러오는 동안에도 loaded로 둔다.
 export type SectionStatus = 'idle' | 'loading' | 'loaded' | 'error';
@@ -17,6 +25,12 @@ type CaseProgressState = {
   loadTimeline: (caseId: number) => Promise<void>;
   loadTodos: (caseId: number) => Promise<void>;
   toggleTodo: (caseId: number, todoId: number) => Promise<ToggleResult>;
+  // 편집 저장. 성공하면 true(응답을 먼저 반영하고 서버 순서를 따르려고 조용히 다시 불러온다), 실패하면 false.
+  addTimeline: (caseId: number, body: CreateTimelineRequest) => Promise<boolean>;
+  editTimeline: (caseId: number, timelineId: number, body: UpdateTimelineRequest) => Promise<boolean>;
+  addTodo: (caseId: number, body: CreateTodoRequest) => Promise<boolean>;
+  editTodo: (caseId: number, todoId: number, body: UpdateTodoRequest) => Promise<boolean>;
+  removeTodo: (caseId: number, todoId: number) => Promise<boolean>;
   reset: () => void;
 };
 
@@ -39,6 +53,18 @@ export const useCaseProgressStore = create<CaseProgressState>((set, get) => {
         todos: { ...state.todos, [caseId]: { ...section, items: section.items.map((t) => (t.id === todoId ? update(t) : t)) } },
       };
     });
+
+  // 저장 요청을 보내고, 로그아웃(reset)으로 세션이 바뀐 뒤 도착한 응답은 버린다. 요청·응답 내용은 남기지 않는다.
+  const runEdit = async <T,>(request: () => Promise<T>, apply: (result: T) => void): Promise<boolean> => {
+    const generation = resetGeneration;
+    try {
+      const result = await request();
+      if (generation === resetGeneration) apply(result);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   return {
     timelines: {},
@@ -116,6 +142,75 @@ export const useCaseProgressStore = create<CaseProgressState>((set, get) => {
         return 'failed';
       }
     },
+
+    addTimeline: (caseId, body) =>
+      runEdit(
+        () => caseApi.createTimeline(caseId, body),
+        (created) => {
+          bump(timelineSeqs, caseId);
+          set((state) => {
+            const section = state.timelines[caseId];
+            if (!section) return state;
+            return { timelines: { ...state.timelines, [caseId]: { ...section, items: [...section.items, created] } } };
+          });
+          void get().loadTimeline(caseId);
+        }
+      ),
+
+    editTimeline: (caseId, timelineId, body) =>
+      runEdit(
+        () => caseApi.updateTimeline(caseId, timelineId, body),
+        (updated) => {
+          bump(timelineSeqs, caseId);
+          set((state) => {
+            const section = state.timelines[caseId];
+            if (!section) return state;
+            return {
+              timelines: { ...state.timelines, [caseId]: { ...section, items: section.items.map((t) => (t.id === timelineId ? updated : t)) } },
+            };
+          });
+          void get().loadTimeline(caseId);
+        }
+      ),
+
+    addTodo: (caseId, body) =>
+      runEdit(
+        () => caseApi.createTodo(caseId, body),
+        (created) => {
+          bump(todoSeqs, caseId);
+          set((state) => {
+            const section = state.todos[caseId];
+            if (!section) return state;
+            return { todos: { ...state.todos, [caseId]: { ...section, items: [...section.items, created] } } };
+          });
+          void get().loadTodos(caseId);
+        }
+      ),
+
+    editTodo: (caseId, todoId, body) =>
+      runEdit(
+        () => caseApi.updateTodo(caseId, todoId, body),
+        (updated) => {
+          bump(todoSeqs, caseId);
+          replaceTodo(caseId, todoId, () => updated);
+          void get().loadTodos(caseId);
+        }
+      ),
+
+    removeTodo: (caseId, todoId) =>
+      runEdit(
+        () => caseApi.deleteTodo(caseId, todoId),
+        () => {
+          bump(todoSeqs, caseId);
+          pendingTodos[caseId]?.delete(todoId);
+          set((state) => {
+            const section = state.todos[caseId];
+            if (!section) return state;
+            return { todos: { ...state.todos, [caseId]: { ...section, items: section.items.filter((t) => t.id !== todoId) } } };
+          });
+          void get().loadTodos(caseId);
+        }
+      ),
 
     reset: () => {
       resetGeneration += 1;

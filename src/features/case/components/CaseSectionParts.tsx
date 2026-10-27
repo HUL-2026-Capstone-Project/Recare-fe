@@ -3,13 +3,29 @@ import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import { Card } from '@/features/home/components/Card';
+import { PlusIcon } from './SheetIcons';
 
-export function SectionTitle({ title, right }: { title: string; right?: string }) {
+export function SectionTitle({ title, right }: { title: string; right?: ReactNode }) {
   return (
     <View className="flex-row items-center justify-between" style={{ marginBottom: 12 }}>
       <Text style={{ fontSize: 17, fontWeight: '700', color: colors.text1, letterSpacing: -0.3 }}>{title}</Text>
-      {right != null && <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text2, letterSpacing: -0.2 }}>{right}</Text>}
+      {right}
     </View>
+  );
+}
+
+// 제목 줄 오른쪽 "추가". 세로 마진 -12, 오른쪽 마진 -8로 줄 높이는 그대로 두고 터치 영역만 44로 키운다.
+export function AddButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      className="flex-row items-center"
+      style={{ height: 44, paddingHorizontal: 8, marginVertical: -12, marginRight: -8, gap: 4 }}
+    >
+      <PlusIcon size={14} />
+      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary, letterSpacing: -0.3 }}>추가</Text>
+    </Pressable>
   );
 }
 
@@ -33,12 +49,23 @@ export function SectionSkeleton() {
   );
 }
 
-export function SectionEmpty({ text }: { text: string }) {
+export function SectionEmpty({ text, cta }: { text: string; cta?: { label: string; onPress: () => void } }) {
   return (
     <SectionCard padding={0}>
-      <Text className="text-center" style={{ ...EMPTY_TEXT_STYLE, paddingVertical: 28, paddingHorizontal: 16 }}>
+      <Text className="text-center" style={{ ...EMPTY_TEXT_STYLE, paddingTop: 28, paddingBottom: cta ? 0 : 28, paddingHorizontal: 16 }}>
         {text}
       </Text>
+      {cta && (
+        <View className="items-center" style={{ marginTop: 16, marginBottom: 28 }}>
+          <Pressable
+            onPress={cta.onPress}
+            className="items-center justify-center"
+            style={{ height: 44, paddingHorizontal: 20, borderRadius: 12, backgroundColor: colors.primary }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: -0.3 }}>{cta.label}</Text>
+          </Pressable>
+        </View>
+      )}
     </SectionCard>
   );
 }
