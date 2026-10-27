@@ -20,14 +20,6 @@ function straightDistanceKm(a: Coordinates, b: Coordinates) {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
-// 스웨거 specialty는 문자열 하나라 쉼표로 나눈다(구분 방식은 백엔드 확인 전의 가정).
-function parseSpecialties(specialty: string | null) {
-  return (specialty ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function InfoRow({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
     <View className="flex-row items-start" style={{ gap: 12 }}>
@@ -53,7 +45,7 @@ function SpecialtyChip({ label, extra }: { label: string; extra?: boolean }) {
 }
 
 export function HospitalDetailSheet({ hospital, origin, onClose }: { hospital: Hospital; origin: Coordinates | null; onClose: () => void }) {
-  const specialties = parseSpecialties(hospital.specialty);
+  const specialties = hospital.specialties;
   const hiddenCount = specialties.length - MAX_SPECIALTY_CHIPS;
   const distanceKm = hospital.distanceKm ?? (origin ? straightDistanceKm(origin, hospital) : null);
   const hasPhone = !!hospital.phone;
