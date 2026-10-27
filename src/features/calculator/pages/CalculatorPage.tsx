@@ -11,9 +11,8 @@ import { SectionHeader } from '@/features/home/components/SectionHeader';
 import { EstimatedAmountCard } from '@/features/calculator/components/EstimatedAmountCard';
 import { CalculationInfoCard } from '@/features/calculator/components/CalculationInfoCard';
 import { CalculationHistoryCard } from '@/features/calculator/components/CalculationHistoryCard';
-import { calculatorMock } from '@/features/calculator/mocks';
 import { digitsToDate, diffInclusiveDays } from '@/features/calculator/utils/date';
-import { buildBenefitRequest, formatWon, isBenefitRequestReady, isoDateToDigits } from '@/features/calculator/benefitMapper';
+import { buildBenefitRequest, formatWon, isBenefitRequestReady, isoDateToDigits, toHistoryItem } from '@/features/calculator/benefitMapper';
 
 const toDigits = (value: string) => value.replace(/\D/g, '');
 
@@ -37,6 +36,10 @@ export default function CalculatorScreen() {
   const result = useBenefitStore((state) => state.result);
   const status = useBenefitStore((state) => state.status);
   const preview = useBenefitStore((state) => state.preview);
+  const calculate = useBenefitStore((state) => state.calculate);
+  const histories = useBenefitStore((state) => state.histories);
+  const loadHistories = useBenefitStore((state) => state.loadHistories);
+  const activeCaseId = activeCase?.id;
 
   useEffect(() => {
     if (useCaseStore.getState().cases.length === 0) fetchCases();
@@ -46,6 +49,11 @@ export default function CalculatorScreen() {
   useEffect(() => {
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
+
+  // 대표 케이스가 있으면 그 케이스의 계산 이력을 불러온다. 케이스가 없으면 이력은 비어 있다.
+  useEffect(() => {
+    if (activeCaseId != null) loadHistories(activeCaseId);
+  }, [activeCaseId, loadHistories]);
 
   // 사용자가 아직 요양기간을 건드리지 않았을 때만 케이스 값으로 채운다.
   useEffect(() => {
@@ -84,7 +92,9 @@ export default function CalculatorScreen() {
     const request = buildBenefitRequest({ averageWageDigits, careStartDigits, careEndDigits, excludedDaysDigits });
     // 필수 값(임금, 요양 시작/종료일)이 없으면 호출하지 않는다. 대표 케이스나 요양기간이 없으면 칸이 비어 여기서 멈춘다.
     if (!isBenefitRequestReady(request)) return;
-    preview(request);
+    // 대표 케이스가 있으면 케이스 계산(이력이 쌓임), 없으면 저장·이력이 없는 미리 계산.
+    if (activeCaseId != null) calculate(activeCaseId, request);
+    else preview(request);
   };
 
   return (
@@ -133,13 +143,18 @@ export default function CalculatorScreen() {
 
             <View style={{ height: 12 }} />
 
-            <SectionHeader
-              title="계산 이력 조회"
-              actionLabel="전체보기 ›"
-              // 이동 대상이 시안에 없어 스텁 처리 (TODO)
-              onPressAction={() => {}}
-            />
-            <CalculationHistoryCard items={calculatorMock.history} />
+            {/* 이력이 없거나 불러오지 못했으면 시안에 빈 상태가 없어 제목과 카드를 함께 숨긴다. */}
+            {histories.length > 0 && (
+              <>
+                <SectionHeader
+                  title="계산 이력 조회"
+                  actionLabel="전체보기 ›"
+                  // 이동 대상이 시안에 없어 스텁 처리 (TODO)
+                  onPressAction={() => {}}
+                />
+                <CalculationHistoryCard items={histories.map(toHistoryItem)} />
+              </>
+            )}
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

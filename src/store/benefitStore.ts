@@ -17,9 +17,12 @@ type BenefitState = {
   input: BenefitResponse | null;
   result: BenefitCalculationResponse | null;
   histories: BenefitHistoryResponse[];
+  historyCaseId: number | null;
   status: BenefitStatus;
   errorMessage: string | null;
   fetchBenefit: (caseId: number) => Promise<void>;
+  // 케이스별 계산 이력만 불러온다. 계산 상태(status)와 별개이고, 실패하면 이력을 비운다(안내 없음).
+  loadHistories: (caseId: number) => Promise<void>;
   calculate: (caseId: number, request: BenefitInputRequest) => Promise<void>;
   preview: (request: BenefitPreviewRequest) => Promise<void>;
   reset: () => void;
@@ -27,13 +30,16 @@ type BenefitState = {
 
 // 요청이 겹칠 때 오래된 응답이 최신 상태를 덮어쓰지 않도록 쓰는 요청 식별값.
 let requestSeq = 0;
+// 이력 조회 전용 식별값. 케이스가 바뀌거나 reset된 뒤 도착한 이력 응답을 버린다.
+let historySeq = 0;
 
 // 임금·요양기간·계산 금액은 메모리(zustand)에만 둔다. 저장소에 쓰지 않고 로그로도 남기지 않는다.
 // 로그아웃(사용자/강제) 시 authStore가 reset()을 호출해 비운다.
-export const useBenefitStore = create<BenefitState>((set) => ({
+export const useBenefitStore = create<BenefitState>((set, get) => ({
   input: null,
   result: null,
   histories: [],
+  historyCaseId: null,
   status: 'idle',
   errorMessage: null,
 
@@ -58,6 +64,20 @@ export const useBenefitStore = create<BenefitState>((set) => ({
     }
   },
 
+  loadHistories: async (caseId) => {
+    const seq = ++historySeq;
+    // 다른 케이스의 이력이 남아 보이지 않게 케이스가 바뀌면 먼저 비운다.
+    if (get().historyCaseId !== caseId) set({ histories: [], historyCaseId: caseId });
+    try {
+      const histories = await benefitApi.getBenefitHistories(caseId);
+      if (seq !== historySeq) return;
+      set({ histories });
+    } catch {
+      if (seq !== historySeq) return;
+      set({ histories: [] });
+    }
+  },
+
   // 이미 입력값이 있어도 PATCH 후 계산하지 않고, calculate 본문에 현재 입력값을 담아 보낸다(서버가 저장 후 계산).
   calculate: async (caseId, request) => {
     const seq = ++requestSeq;
@@ -65,10 +85,9 @@ export const useBenefitStore = create<BenefitState>((set) => ({
     try {
       const result = await benefitApi.calculateBenefit(caseId, request);
       if (seq !== requestSeq) return;
-      // 계산 이력이 서버에 남으므로 목록을 다시 받아 최신순으로 맞춘다.
-      const histories = await benefitApi.getBenefitHistories(caseId);
-      if (seq !== requestSeq) return;
-      set({ result, histories, status: 'success' });
+      set({ result, status: 'success' });
+      // 계산 이력이 서버에 남으므로 목록을 다시 받는다. 이력 조회가 실패해도 계산 결과는 그대로 둔다.
+      void get().loadHistories(caseId);
     } catch (e) {
       if (seq !== requestSeq) return;
       set({ status: 'error', errorMessage: getErrorMessage(e as ApiError) });
@@ -92,6 +111,7 @@ export const useBenefitStore = create<BenefitState>((set) => ({
 
   reset: () => {
     requestSeq += 1;
-    set({ input: null, result: null, histories: [], status: 'idle', errorMessage: null });
+    historySeq += 1;
+    set({ input: null, result: null, histories: [], historyCaseId: null, status: 'idle', errorMessage: null });
   },
 }));
