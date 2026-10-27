@@ -34,17 +34,20 @@ export function openNaverRoute({
   latitude,
   longitude,
   name,
+  fallbackToStore = true,
 }: {
   latitude: number | null;
   longitude: number | null;
   name: string;
+  // false면 네이버 지도 앱을 열지 못해도 스토어로 보내지 않고 아무 것도 하지 않는다.
+  fallbackToStore?: boolean;
 }) {
   if (latitude == null || longitude == null) return;
 
   const url = `nmap://route/${NAVER_ROUTE_MODE}?dlat=${latitude}&dlng=${longitude}&dname=${encodeURIComponent(name)}&appname=${APP_PACKAGE_ID}`;
 
   Linking.openURL(url).catch(() => {
-    if (!NAVER_MAP_STORE_URL) return;
+    if (!fallbackToStore || !NAVER_MAP_STORE_URL) return;
     Linking.openURL(NAVER_MAP_STORE_URL).catch(() => {
       // TODO: 스토어 이동까지 실패했을 때의 안내 UI는 시안 필요
     });
