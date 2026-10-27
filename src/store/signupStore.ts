@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { authApi } from '@/api/authApi';
 import type { SignUpRequest } from '@/api/authApi';
+import { buildTermsAgreements } from '@/features/auth/constants/terms';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { useAuthStore } from './authStore';
 
@@ -18,7 +19,7 @@ type SignupDraft = {
 type SignupState = {
   draft: SignupDraft | null;
   // 2단계 약관 동의 화면과 약관 상세 화면을 오가도 체크 상태가 유지되도록 스토어에 둔다.
-  // TODO: /users/terms는 인증(JWT)이 필요해 가입 전에는 호출할 수 없어 서버에 저장하지 않고 화면 상태로만 관리한다.
+  // 체크 상태는 가입 제출 시 요청의 termsAgreements로 함께 보낸다(POST /users/terms는 쓰지 않는다).
   termsAgree: boolean[];
   setStep1: (draft: SignupDraft) => void;
   setTermsAgree: (next: boolean[]) => void;
@@ -56,6 +57,7 @@ export const useSignupStore = create<SignupState>((set, get) => ({
       phone: draft.phone,
       address,
       ...(email ? { email } : {}),
+      termsAgreements: buildTermsAgreements(get().termsAgree),
     };
 
     const res = await authApi.signup(payload);
