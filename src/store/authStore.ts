@@ -6,6 +6,7 @@ import type { ApiError } from '@/api/types';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { setForceLogoutHandler } from './authEvents';
 import { useBenefitStore } from './benefitStore';
+import { useCaseProgressStore } from './caseProgressStore';
 import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
 import { useHospitalStore } from './hospitalStore';
@@ -27,6 +28,7 @@ function clearSessionData() {
   useChatStore.getState().reset();
   useProfileStore.getState().reset();
   useCaseStore.getState().reset();
+  useCaseProgressStore.getState().reset();
   useBenefitStore.getState().reset();
   useHospitalStore.getState().reset();
   useMyStatsStore.getState().reset();

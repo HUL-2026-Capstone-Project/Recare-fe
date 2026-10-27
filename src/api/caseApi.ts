@@ -65,6 +65,46 @@ export type CaseResponse = {
   updatedAt: string;
 };
 
+// 스웨거 TimelineResponse / TodoResponse. 필수가 아닌 필드만 null일 수 있다.
+export type TimelineStepType =
+  | 'DIAGNOSIS'
+  | 'DOCUMENT_PREP'
+  | 'APPLICATION'
+  | 'REVIEW'
+  | 'DECISION'
+  | 'TREATMENT'
+  | 'BENEFIT'
+  | 'CLOSED'
+  | 'ETC';
+export type TimelineStepStatus = 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'SKIPPED';
+
+export type TimelineResponse = {
+  id: number;
+  stepType: TimelineStepType;
+  stepStatus: TimelineStepStatus;
+  title: string;
+  description?: string | null;
+  eventDate?: string | null;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type TodoPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type TodoStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+
+export type TodoResponse = {
+  id: number;
+  title: string;
+  description?: string | null;
+  priority: TodoPriority;
+  dueDate?: string | null;
+  status: TodoStatus;
+  linkedDocumentId?: number | null;
+  linkedTimelineId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 // 스웨거 CreateCaseRequest. 필수는 title, accidentType, accidentDate이고 hasWorkStop을 보내지 않으면 서버가 false로 본다.
 export type CreateCaseRequest = {
   title: string;
@@ -112,6 +152,23 @@ export const caseApi = {
 
   async getCase(id: number): Promise<CaseResponse> {
     const { data } = await apiClient.get<CaseResponse>(`/api/v1/cases/${id}`);
+    return data;
+  },
+
+  // 서버가 sortOrder 순으로 준다. 앱은 정렬하지 않는다.
+  async getTimeline(caseId: number): Promise<TimelineResponse[]> {
+    const { data } = await apiClient.get<TimelineResponse[]>(`/api/v1/cases/${caseId}/timeline`);
+    return data;
+  },
+
+  // 서버가 상태·우선순위·마감일 순으로 준다. status 쿼리는 쓰지 않는다.
+  async getTodos(caseId: number): Promise<TodoResponse[]> {
+    const { data } = await apiClient.get<TodoResponse[]>(`/api/v1/cases/${caseId}/todos`);
+    return data;
+  },
+
+  async changeTodoStatus(caseId: number, todoId: number, status: TodoStatus): Promise<TodoResponse> {
+    const { data } = await apiClient.patch<TodoResponse>(`/api/v1/cases/${caseId}/todos/${todoId}/status`, { status });
     return data;
   },
 
