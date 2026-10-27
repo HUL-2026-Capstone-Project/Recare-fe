@@ -37,13 +37,13 @@ export function getDueInfo(dueDate: string | null | undefined, done: boolean, to
 
 // 앱이 정한 종류 라벨. 여기에 없는 값이 오면 라벨을 그리지 않는다.
 const STEP_TYPE_LABELS: Record<TimelineStepType, string> = {
-  DIAGNOSIS: '진단',
+  DIAGNOSIS: '자가진단',
   DOCUMENT_PREP: '서류 준비',
   APPLICATION: '신청',
   REVIEW: '심사',
   DECISION: '결정',
   TREATMENT: '요양',
-  BENEFIT: '급여',
+  BENEFIT: '급여 청구',
   CLOSED: '종결',
   ETC: '기타',
 };

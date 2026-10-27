@@ -21,6 +21,7 @@ type AuthState = {
   login: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   withdraw: () => Promise<void>;
+  endSessionLocally: () => Promise<void>;
 };
 
 // 로그아웃(사용자/강제) 시 메모리에 남은 개인 정보가 다음 로그인으로 넘어가지 않도록 스토어를 비운다.
@@ -34,7 +35,7 @@ function clearSessionData() {
   useMyStatsStore.getState().reset();
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   status: 'loading',
 
   hydrate: async () => {
@@ -74,18 +75,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // 서버 로그아웃 실패 여부와 무관하게 로컬 로그아웃은 진행한다.
     } finally {
-      await tokenStorage.clear();
-      clearSessionData();
-      set({ status: 'unauthenticated' });
+      await get().endSessionLocally();
     }
+  },
+
+  // 서버 호출 없이 로컬 세션만 끝낸다(토큰 삭제 → 메모리 데이터 초기화 → 인증 해제). 로그인 화면 이동은 루트 레이아웃이 처리한다.
+  endSessionLocally: async () => {
+    await tokenStorage.clear();
+    clearSessionData();
+    set({ status: 'unauthenticated' });
   },
 
   // 탈퇴 성공 후에는 서버 로그아웃 호출 없이 로컬 토큰과 메모리 데이터만 정리한다. 실패하면 던져서 호출한 쪽이 처리한다.
   withdraw: async () => {
     await userApi.deleteUser();
-    await tokenStorage.clear();
-    clearSessionData();
-    set({ status: 'unauthenticated' });
+    await get().endSessionLocally();
   },
 }));
 
