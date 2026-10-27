@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { useAuthStore } from '@/store/authStore';
-import { useCaseStore } from '@/store/caseStore';
+import { useMyStatsStore } from '@/store/myStatsStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useToastStore } from '@/store/toastStore';
 import { ProfileCard } from '../components/ProfileCard';
@@ -25,17 +25,16 @@ export default function MyPage() {
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
 
-  // 진행 케이스 수는 케이스 목록(progress.group이 ACTIVE)에서 센다. 아직 한 번도 불러오지 않았을 때만 불러온다.
-  // 제출 서류·받은 알림 수는 서버에서 채울 수 없어 통계에서 그리지 않는다.
-  const cases = useCaseStore((state) => state.cases);
-  const listStatus = useCaseStore((state) => state.listStatus);
-  const fetchCases = useCaseStore((state) => state.fetchCases);
-  const hasCaseList = listStatus === 'success' || cases.length > 0;
-  const activeCaseCount = cases.filter((c) => c.progress.group === 'ACTIVE').length;
+  // 통계는 서버 값(GET /users/my/stats)이다. 탭 화면은 마운트된 채로 남으므로 포커스될 때마다 새로 받는다.
+  // 아직 받지 못했거나 실패했으면 stats가 null이라 통계 영역을 그리지 않는다.
+  const stats = useMyStatsStore((state) => state.stats);
+  const fetchStats = useMyStatsStore((state) => state.fetchStats);
 
-  useEffect(() => {
-    if (listStatus === 'idle') fetchCases();
-  }, [listStatus, fetchCases]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchStats();
+    }, [fetchStats])
+  );
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -56,7 +55,15 @@ export default function MyPage() {
           email={profile?.email ?? ''}
           onPress={() => router.push('/profile')}
         />
-        {hasCaseList && <StatsRow stats={[{ value: String(activeCaseCount), label: '진행 케이스' }]} />}
+        {stats && (
+          <StatsRow
+            stats={[
+              { value: String(stats.activeCaseCount), label: '진행 케이스' },
+              { value: String(stats.submittedDocumentCount), label: '제출 서류' },
+              { value: String(stats.notificationCount), label: '받은 알림', onPress: () => router.push('/notifications') },
+            ]}
+          />
+        )}
         <AccountMenuCard items={myMock.accountMenu} />
         <PolicyMenuCard items={myMock.policyMenu} />
 
