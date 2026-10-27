@@ -41,6 +41,11 @@ export const userApi = {
     return data;
   },
 
+  // 스웨거: 요청 body 없음, 응답 200(본문 없음). 문서화된 오류 응답은 없다.
+  async deleteUser(): Promise<void> {
+    await apiClient.patch('/api/v1/users/deleteuser');
+  },
+
   async getMyStats(): Promise<MyStatsResponse> {
     const { data } = await apiClient.get<MyStatsResponse>('/api/v1/users/my/stats');
     return data;

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { authApi } from '@/api/authApi';
+import { userApi } from '@/api/userApi';
 import type { ApiError } from '@/api/types';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { setForceLogoutHandler } from './authEvents';
@@ -18,6 +19,7 @@ type AuthState = {
   hydrate: () => Promise<void>;
   login: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  withdraw: () => Promise<void>;
 };
 
 // 로그아웃(사용자/강제) 시 메모리에 남은 개인 정보가 다음 로그인으로 넘어가지 않도록 스토어를 비운다.
@@ -74,6 +76,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       clearSessionData();
       set({ status: 'unauthenticated' });
     }
+  },
+
+  // 탈퇴 성공 후에는 서버 로그아웃 호출 없이 로컬 토큰과 메모리 데이터만 정리한다. 실패하면 던져서 호출한 쪽이 처리한다.
+  withdraw: async () => {
+    await userApi.deleteUser();
+    await tokenStorage.clear();
+    clearSessionData();
+    set({ status: 'unauthenticated' });
   },
 }));
 
