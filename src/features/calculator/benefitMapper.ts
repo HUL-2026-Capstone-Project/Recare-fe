@@ -55,12 +55,12 @@ export function isBenefitRequestReady(request: BenefitInputRequest): boolean {
   return treatmentStartDate <= treatmentEndDate;
 }
 
-// 금액은 원 단위 number로 가정(서버 단위·반올림 규칙 미확인)하고 화면용 천 단위 문자열로 바꾼다.
+// 금액은 원 단위이고 휴업급여는 하루 단위로 1원 미만을 버린 정수다(스웨거 info). 화면용 천 단위 문자열로 바꾼다.
 export function formatWon(amount: number): string {
   return String(Math.round(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// createdAt(date-time)의 날짜 부분만 쓴다. 타임존 처리는 서버 답변 전까지 하지 않는다.
+// createdAt(date-time)은 오프셋 없는 한국 시간(KST, 스웨거 info)이라 UTC로 해석하지 않고 날짜 부분만 쓴다.
 function formatCreatedDate(createdAt: string | null | undefined): string {
   if (!createdAt) return '';
   return formatDigitsWithDots(createdAt.slice(0, 10).replace(/-/g, ''));

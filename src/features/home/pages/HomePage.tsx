@@ -7,7 +7,7 @@ import { colors } from '@/shared/constants/colors';
 import { useCaseStore } from '@/store/caseStore';
 import { useProfileStore } from '@/store/profileStore';
 import { toHomeSubtitle, toRecoveryPeriod } from '@/features/case/caseMapper';
-import { TOTAL_STEPS, getStatusPresentation, isClosedStatus } from '@/features/case/statusMapper';
+import { getStatusPresentation } from '@/features/case/statusMapper';
 import { Header } from '../components/Header';
 import { PeriodCard } from '../components/PeriodCard';
 import { SectionHeader } from '../components/SectionHeader';
@@ -22,16 +22,13 @@ export default function HomeScreen() {
   const profile = useProfileStore((state) => state.profile);
   const fetchProfile = useProfileStore((state) => state.fetchProfile);
   const cases = useCaseStore((state) => state.cases);
-  const details = useCaseStore((state) => state.details);
   const fetchCases = useCaseStore((state) => state.fetchCases);
-  const fetchCase = useCaseStore((state) => state.fetchCase);
 
-  // TODO(가정): 대표 케이스 = CLOSED가 아닌 케이스 중 서버가 준 순서상 첫 번째. 백엔드 기준이 정해지면 바꾼다.
-  const activeCase = cases.find((c) => !isClosedStatus(c.status));
-  const activeCaseId = activeCase?.id;
-  const activeDetail = activeCaseId != null ? details[activeCaseId] : undefined;
-  const presentation = getStatusPresentation(activeCase?.status);
-  const period = activeDetail ? toRecoveryPeriod(activeDetail) : null;
+  // 대표 케이스 = 진행 중(progress.group이 ACTIVE)인 케이스 중 서버가 준 순서상 첫 번째(기본 정렬 createdAt 최신순).
+  // 요양기간과 경위 요약은 목록 응답(summary)에 있어 상세를 따로 부르지 않는다.
+  const activeCase = cases.find((c) => c.progress.group === 'ACTIVE');
+  const presentation = activeCase ? getStatusPresentation(activeCase.status, activeCase.progress) : null;
+  const period = activeCase ? toRecoveryPeriod(activeCase) : null;
 
   useEffect(() => {
     if (!profile) fetchProfile();
@@ -43,11 +40,6 @@ export default function HomeScreen() {
       fetchCases();
     }, [fetchCases])
   );
-
-  // 경위 한 줄과 요양기간은 상세 응답에만 있어 대표 케이스에 한해 상세를 한 번 불러온다.
-  useEffect(() => {
-    if (activeCaseId != null) fetchCase(activeCaseId);
-  }, [activeCaseId, fetchCase]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -68,7 +60,7 @@ export default function HomeScreen() {
           />
         )}
 
-        {activeCase && (
+        {activeCase && presentation && (
           <View className="mb-6">
             <SectionHeader
               title="내 사건 대시보드"
@@ -80,10 +72,10 @@ export default function HomeScreen() {
               statusLabel={presentation.label}
               statusBg={presentation.badgeBg}
               statusFg={presentation.badgeFg}
-              title={activeCase.title ?? ''}
-              subtitle={activeDetail ? toHomeSubtitle(activeDetail) : ''}
+              title={activeCase.title}
+              subtitle={toHomeSubtitle(activeCase)}
               currentStep={presentation.step}
-              totalSteps={TOTAL_STEPS}
+              totalSteps={presentation.totalSteps}
               onPressDetail={() => router.push(`/case-detail/${activeCase.id}`)}
             />
           </View>

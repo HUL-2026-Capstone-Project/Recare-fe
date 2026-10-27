@@ -6,7 +6,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { colors } from '@/shared/constants/colors';
 import { useCaseStore } from '@/store/caseStore';
 import { formatIsoDate } from '../caseMapper';
-import { TOTAL_STEPS, getStatusPresentation, isClosedStatus } from '../statusMapper';
+import { getStatusPresentation } from '../statusMapper';
 
 type FilterKey = '전체' | '진행 중' | '종결';
 
@@ -23,9 +23,9 @@ export default function CasesScreen() {
     }, [fetchCases])
   );
 
-  // 목록은 한 번만 받고 필터/개수는 앱에서 계산한다("진행 중" = CLOSED가 아닌 모든 상태, 임시 가정).
-  const closedCases = cases.filter((c) => isClosedStatus(c.status));
-  const activeCases = cases.filter((c) => !isClosedStatus(c.status));
+  // 목록은 한 번만 받고 필터/개수는 서버가 준 progress.group 기준으로 앱에서 계산한다("진행 중" = ACTIVE, "종결" = CLOSED).
+  const closedCases = cases.filter((c) => c.progress.group === 'CLOSED');
+  const activeCases = cases.filter((c) => c.progress.group === 'ACTIVE');
   const FILTERS: { key: FilterKey; count: number }[] = [
     { key: '전체', count: cases.length },
     { key: '진행 중', count: activeCases.length },
@@ -92,7 +92,7 @@ export default function CasesScreen() {
         {/* 케이스 목록 */}
         <View className="gap-3">
           {filteredCases.map(c => {
-            const presentation = getStatusPresentation(c.status);
+            const presentation = getStatusPresentation(c.status, c.progress);
             return (
               <View
                 key={c.id}
@@ -138,33 +138,27 @@ export default function CasesScreen() {
                   재해일 {formatIsoDate(c.accidentDate)}
                 </Text>
 
-                {/* 프로그레스 바 — 알 수 없는 status면 단계를 표시하지 않는다 */}
-                {presentation.step != null && (
-                  <View className="flex-row gap-1 mb-3">
-                    {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                      <View
-                        key={i}
-                        className="flex-1 rounded-sm"
-                        style={{
-                          height: 4,
-                          borderRadius: 2,
-                          backgroundColor: i < (presentation.step ?? 0) ? presentation.progressColor : colors.border,
-                        }}
-                      />
-                    ))}
-                  </View>
-                )}
+                {/* 프로그레스 바 — 단계와 전체 단계 수는 서버(progress) 값 */}
+                <View className="flex-row gap-1 mb-3">
+                  {Array.from({ length: presentation.totalSteps }).map((_, i) => (
+                    <View
+                      key={i}
+                      className="flex-1 rounded-sm"
+                      style={{
+                        height: 4,
+                        borderRadius: 2,
+                        backgroundColor: i < presentation.step ? presentation.progressColor : colors.border,
+                      }}
+                    />
+                  ))}
+                </View>
 
                 {/* 단계 + 자세히보기 */}
                 <View className="flex-row justify-between items-center">
-                  {presentation.step != null ? (
-                    <Text className="text-[12px]" style={{ letterSpacing: -0.2 }}>
-                      <Text style={{ color: presentation.progressColor, fontWeight: '700' }}>{presentation.step}</Text>
-                      <Text style={{ color: colors.text3 }}> / {TOTAL_STEPS} 단계</Text>
-                    </Text>
-                  ) : (
-                    <View />
-                  )}
+                  <Text className="text-[12px]" style={{ letterSpacing: -0.2 }}>
+                    <Text style={{ color: presentation.progressColor, fontWeight: '700' }}>{presentation.step}</Text>
+                    <Text style={{ color: colors.text3 }}> / {presentation.totalSteps} 단계</Text>
+                  </Text>
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => router.push(`/case-detail/${c.id}`)}
