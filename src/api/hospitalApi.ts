@@ -1,19 +1,20 @@
 import { apiClient } from './client';
 
+// 스웨거 기준: required(id, institutionCode, name, address, supportsCompensation, isDesignated)는 항상 값이 있고
+// 나머지(좌표 포함)는 null일 수 있다.
 export type HospitalResponse = {
   id: number;
-  institutionCode: string | null;
+  institutionCode: string;
   name: string;
-  postalCode: string | null;
-  address: string | null;
-  phone: string | null;
-  specialty: string | null;
-  supportsCompensation: boolean | null;
-  latitude: number;
-  longitude: number;
-  distance: number | null;
-  // 스웨거 문서는 이 필드를 "designated"로 적어두었지만 실제 응답은 "isDesignated"로 내려온다(확인됨).
-  isDesignated: boolean | null;
+  postalCode?: string | null;
+  address: string;
+  phone?: string | null;
+  specialty?: string | null;
+  supportsCompensation: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  distance?: number | null;
+  isDesignated: boolean;
 };
 
 export type PageHospitalResponse = {

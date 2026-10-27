@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/shared/constants/colors';
 import { useBenefitStore } from '@/store/benefitStore';
 import { useCaseStore } from '@/store/caseStore';
-import { isClosedStatus } from '@/features/case/statusMapper';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { SectionHeader } from '@/features/home/components/SectionHeader';
 import { homeMock } from '@/features/home/components/mocks';
@@ -27,13 +26,10 @@ export default function CalculatorScreen() {
   const [careEndDigits, setCareEndDigits] = useState('');
   const [excludedDaysDigits, setExcludedDaysDigits] = useState('');
 
-  // 대표 케이스(CLOSED가 아닌 첫 번째)의 요양기간. 홈과 같은 기준이며 caseStore에 이미 있으면 그대로 쓴다.
+  // 대표 케이스(진행 중, progress.group이 ACTIVE인 첫 번째)의 요양기간. 홈과 같은 기준이며 목록 응답에 요양기간이 있다.
   const cases = useCaseStore((state) => state.cases);
-  const details = useCaseStore((state) => state.details);
   const fetchCases = useCaseStore((state) => state.fetchCases);
-  const fetchCase = useCaseStore((state) => state.fetchCase);
-  const activeCaseId = cases.find((c) => !isClosedStatus(c.status))?.id;
-  const activeDetail = activeCaseId != null ? details[activeCaseId] : undefined;
+  const activeCase = cases.find((c) => c.progress.group === 'ACTIVE');
 
   const result = useBenefitStore((state) => state.result);
   const status = useBenefitStore((state) => state.status);
@@ -43,17 +39,13 @@ export default function CalculatorScreen() {
     if (useCaseStore.getState().cases.length === 0) fetchCases();
   }, [fetchCases]);
 
-  useEffect(() => {
-    if (activeCaseId != null && !activeDetail) fetchCase(activeCaseId);
-  }, [activeCaseId, activeDetail, fetchCase]);
-
   // 사용자가 아직 요양기간을 건드리지 않았을 때만 케이스 값으로 채운다.
   useEffect(() => {
-    if (activeDetail && careStartDigits === '' && careEndDigits === '') {
-      setCareStartDigits(isoDateToDigits(activeDetail.treatmentStartDate));
-      setCareEndDigits(isoDateToDigits(activeDetail.treatmentEndDate));
+    if (activeCase && careStartDigits === '' && careEndDigits === '') {
+      setCareStartDigits(isoDateToDigits(activeCase.treatmentStartDate));
+      setCareEndDigits(isoDateToDigits(activeCase.treatmentEndDate));
     }
-  }, [activeDetail, careStartDigits, careEndDigits]);
+  }, [activeCase, careStartDigits, careEndDigits]);
 
   // 금융 정보라 화면을 벗어나면 결과를 메모리에서 비운다.
   useEffect(() => {

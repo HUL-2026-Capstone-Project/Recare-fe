@@ -5,7 +5,7 @@ import type { HospitalSearchParams } from '@/api/hospitalApi';
 import { getErrorMessage } from '@/api/errorMessage';
 import type { ApiError } from '@/api/types';
 import type { Hospital } from '@/features/map/mocks';
-import { mapHospitalResponseToHospital } from '@/features/map/mapper';
+import { hasCoordinates, mapHospitalResponseToHospital } from '@/features/map/mapper';
 
 type HospitalStatus = 'idle' | 'loading' | 'success' | 'error';
 type SearchParams = Omit<HospitalSearchParams, 'page'>;
@@ -46,7 +46,7 @@ export const useHospitalStore = create<HospitalState>((set, get) => ({
       const res = await hospitalApi.searchHospitals({ ...params, page: 0 });
       if (seq !== requestSeq) return; // 이 사이 더 최신 검색/다음 페이지 요청이 있었으면 버린다
       set({
-        hospitals: res.content.map(mapHospitalResponseToHospital),
+        hospitals: res.content.filter(hasCoordinates).map(mapHospitalResponseToHospital),
         total: res.totalElements,
         page: res.number,
         isLast: res.last,
@@ -70,7 +70,7 @@ export const useHospitalStore = create<HospitalState>((set, get) => ({
       if (seq !== requestSeq) return;
       set((state) => {
         const existingIds = new Set(state.hospitals.map((h) => h.id));
-        const nextHospitals = res.content.map(mapHospitalResponseToHospital).filter((h) => !existingIds.has(h.id));
+        const nextHospitals = res.content.filter(hasCoordinates).map(mapHospitalResponseToHospital).filter((h) => !existingIds.has(h.id));
         return {
           hospitals: [...state.hospitals, ...nextHospitals],
           total: res.totalElements,
