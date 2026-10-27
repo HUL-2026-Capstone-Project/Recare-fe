@@ -6,6 +6,8 @@ import { getErrorMessage } from '@/api/errorMessage';
 import type { ApiError } from '@/api/types';
 import type { Hospital } from '@/features/map/mocks';
 import { hasCoordinates, mapHospitalResponseToHospital } from '@/features/map/mapper';
+import { toggleFilterKey } from '@/features/map/filters';
+import type { MapFilterKey } from '@/features/map/filters';
 
 type HospitalStatus = 'idle' | 'loading' | 'success' | 'error';
 type SearchParams = Omit<HospitalSearchParams, 'page'>;
@@ -18,6 +20,9 @@ type HospitalState = {
   page: number;
   isLast: boolean;
   isLoadingMore: boolean;
+  selectedFilters: MapFilterKey[];
+  toggleFilter: (key: MapFilterKey) => void;
+  resetFilters: () => void;
   searchHospitals: (params: SearchParams) => Promise<void>;
   loadMoreHospitals: () => Promise<void>;
   reset: () => void;
@@ -37,6 +42,10 @@ export const useHospitalStore = create<HospitalState>((set, get) => ({
   page: 0,
   isLast: false,
   isLoadingMore: false,
+  selectedFilters: [],
+
+  toggleFilter: (key) => set((state) => ({ selectedFilters: toggleFilterKey(state.selectedFilters, key) })),
+  resetFilters: () => set({ selectedFilters: [] }),
 
   searchHospitals: async (params) => {
     const seq = ++requestSeq;
@@ -89,6 +98,6 @@ export const useHospitalStore = create<HospitalState>((set, get) => ({
   reset: () => {
     requestSeq += 1;
     lastSearchParams = {};
-    set({ hospitals: [], total: 0, status: 'idle', errorMessage: null, page: 0, isLast: false, isLoadingMore: false });
+    set({ hospitals: [], total: 0, status: 'idle', errorMessage: null, page: 0, isLast: false, isLoadingMore: false, selectedFilters: [] });
   },
 }));

@@ -26,5 +26,7 @@ export function mapHospitalResponseToHospital(
     longitude: res.longitude,
     designated: res.isDesignated,
     phone: res.phone ?? null,
+    specialty: res.specialty ?? null,
+    distanceKm: res.distance ?? null,
   };
 }

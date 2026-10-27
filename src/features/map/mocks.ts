@@ -8,6 +8,7 @@ export type Hospital = {
   longitude: number;
   designated: boolean;
   phone: string | null;
+  specialty: string | null;
+  // 서버가 준 현재 위치로부터의 거리(km). 없으면 null.
+  distanceKm: number | null;
 };
-
-export const filterChips = ['산재 지정', '정형외과', '재활의학과', '야간진료'];
