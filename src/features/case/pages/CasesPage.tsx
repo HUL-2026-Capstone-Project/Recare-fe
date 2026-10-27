@@ -7,6 +7,8 @@ import { colors } from '@/shared/constants/colors';
 import { useCaseStore } from '@/store/caseStore';
 import { formatIsoDate } from '../caseMapper';
 import { getStatusPresentation } from '../statusMapper';
+import { EmptyStateIcon } from '../components/EmptyStateIcon';
+import { RegisterCaseButton, openCaseRegister } from '../components/RegisterCaseButton';
 
 type FilterKey = '전체' | '진행 중' | '종결';
 
@@ -14,6 +16,7 @@ export default function CasesScreen() {
   const { top } = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<FilterKey>('전체');
   const cases = useCaseStore((state) => state.cases);
+  const listLoaded = useCaseStore((state) => state.listLoaded);
   const fetchCases = useCaseStore((state) => state.fetchCases);
 
   // 탭 화면은 마운트된 채로 남으므로 포커스될 때마다 목록을 새로 받는다.
@@ -33,8 +36,6 @@ export default function CasesScreen() {
   ];
   const filteredCases = selectedFilter === '전체' ? cases : selectedFilter === '진행 중' ? activeCases : closedCases;
 
-  const handleRegisterCase = () => router.push({ pathname: '/case-form', params: { mode: 'create' } });
-
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
       {/* 헤더 */}
@@ -42,25 +43,13 @@ export default function CasesScreen() {
         <Text className="text-[22px] font-extrabold text-text1" style={{ letterSpacing: -0.5 }}>
           내 케이스
         </Text>
-        <TouchableOpacity
-          className="h-9 px-3.5 rounded-full bg-primary flex-row items-center gap-1"
-          activeOpacity={0.85}
-          onPress={handleRegisterCase}
-        >
-          <Image
-            source={require('@/shared/assets/icons/plus-white.png')}
-            style={{ width: 14, height: 14, tintColor: '#fff' }}
-          />
-          <Text className="text-white text-[13px] font-bold" style={{ letterSpacing: -0.3 }}>
-            케이스 등록
-          </Text>
-        </TouchableOpacity>
+        <RegisterCaseButton />
       </View>
 
       <ScrollView
         className="flex-1 px-5"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 14, paddingBottom: 96 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: 14, paddingBottom: 96 }}
       >
         {/* 필터 칩 */}
         <View className="flex-row gap-1.5 mb-4">
@@ -87,6 +76,22 @@ export default function CasesScreen() {
             );
           })}
         </View>
+
+        {/* 전체 0건일 때만(필터 탭만 0건인 경우는 기존 동작 유지) */}
+        {listLoaded && cases.length === 0 && (
+          <View className="flex-1 items-center justify-center" style={{ paddingBottom: 60 }}>
+            <EmptyStateIcon size={64} />
+            <Text style={{ fontSize: 17, fontWeight: '700', color: colors.text1, letterSpacing: -0.3, marginTop: 16 }}>
+              등록된 케이스가 없어요
+            </Text>
+            <Text
+              className="text-center"
+              style={{ fontSize: 13, fontWeight: '500', color: colors.text2, letterSpacing: -0.3, lineHeight: 13 * 1.5, maxWidth: 260, marginTop: 6 }}
+            >
+              오른쪽 위 케이스 등록 버튼으로 첫 케이스를 만들어 보세요
+            </Text>
+          </View>
+        )}
 
         {/* 케이스 목록 */}
         <View className="gap-3">
@@ -180,7 +185,7 @@ export default function CasesScreen() {
       <TouchableOpacity
         className="absolute rounded-full bg-primary items-center justify-center"
         activeOpacity={0.85}
-        onPress={handleRegisterCase}
+        onPress={openCaseRegister}
         style={{
           width: 56,
           height: 56,

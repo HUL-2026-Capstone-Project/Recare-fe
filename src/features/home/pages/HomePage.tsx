@@ -12,6 +12,7 @@ import { Header } from '../components/Header';
 import { PeriodCard } from '../components/PeriodCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { CaseCard } from '../components/CaseCard';
+import { CaseEmptyCard } from '../components/CaseEmptyCard';
 import { ClaimItem } from '../components/ClaimItem';
 import { FaqItem } from '../components/FaqItem';
 import { Card } from '../components/Card';
@@ -22,6 +23,7 @@ export default function HomeScreen() {
   const profile = useProfileStore((state) => state.profile);
   const fetchProfile = useProfileStore((state) => state.fetchProfile);
   const cases = useCaseStore((state) => state.cases);
+  const listLoaded = useCaseStore((state) => state.listLoaded);
   const fetchCases = useCaseStore((state) => state.fetchCases);
 
   // 대표 케이스 = 진행 중(progress.group이 ACTIVE)인 케이스 중 서버가 준 순서상 첫 번째(기본 정렬 createdAt 최신순).
@@ -78,6 +80,21 @@ export default function HomeScreen() {
               totalSteps={presentation.totalSteps}
               onPressDetail={() => router.push(`/case-detail/${activeCase.id}`)}
             />
+          </View>
+        )}
+
+        {!activeCase && listLoaded && (
+          <View className="mb-6">
+            <SectionHeader
+              title="내 사건 대시보드"
+              actionLabel={cases.length > 0 ? '전체보기 ›' : undefined}
+              onPressAction={() => router.push('/(tabs)/cases')}
+            />
+            {cases.length > 0 ? (
+              <CaseEmptyCard title="진행 중인 케이스가 없어요" description="종결된 케이스는 전체보기에서 확인할 수 있어요" />
+            ) : (
+              <CaseEmptyCard title="아직 등록된 케이스가 없어요" description="산재 케이스를 등록하면 진행 상황과 요양 기간을 한눈에 볼 수 있어요" />
+            )}
           </View>
         )}
 

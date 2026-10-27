@@ -40,6 +40,8 @@ function toSummaryItem(detail: CaseResponse): CaseSummaryResponse {
 type CaseState = {
   cases: CaseSummaryResponse[];
   listStatus: CaseStatus;
+  // 마지막 목록 조회가 성공했는지. 다시 불러오는 동안은 이전 값을 유지하고, 실패하거나 reset되면 false다(빈 상태를 깜빡이지 않고 그리기 위함).
+  listLoaded: boolean;
   details: Record<number, CaseResponse>;
   errorMessage: string | null;
   saveStatus: SaveStatus;
@@ -59,6 +61,7 @@ let saveSeq = 0;
 export const useCaseStore = create<CaseState>((set) => ({
   cases: [],
   listStatus: 'idle',
+  listLoaded: false,
   details: {},
   errorMessage: null,
   saveStatus: 'idle',
@@ -69,11 +72,11 @@ export const useCaseStore = create<CaseState>((set) => ({
     try {
       const cases = await caseApi.getCases();
       if (seq !== listSeq) return;
-      set({ cases, listStatus: 'success' });
+      set({ cases, listStatus: 'success', listLoaded: true });
     } catch (e) {
       if (seq !== listSeq) return;
       // TODO(디자인 필요): 목록 화면에 로딩/오류/빈 상태 UI가 시안에 없어 상태값만 남긴다.
-      set({ listStatus: 'error', errorMessage: getErrorMessage(e as ApiError) });
+      set({ listStatus: 'error', listLoaded: false, errorMessage: getErrorMessage(e as ApiError) });
     }
   },
 
@@ -134,6 +137,6 @@ export const useCaseStore = create<CaseState>((set) => ({
     saveSeq += 1;
     listSeq += 1;
     for (const key of Object.keys(detailSeqs)) detailSeqs[Number(key)] += 1;
-    set({ cases: [], listStatus: 'idle', details: {}, errorMessage: null, saveStatus: 'idle' });
+    set({ cases: [], listStatus: 'idle', listLoaded: false, details: {}, errorMessage: null, saveStatus: 'idle' });
   },
 }));
