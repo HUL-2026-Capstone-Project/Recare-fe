@@ -6,7 +6,7 @@ import { colors } from '@/shared/constants/colors';
 type EstimatedAmountCardProps = {
   name: string;
   amount: string;
-  ratioLabel: string;
+  ratioLabel?: string;
 };
 
 export function EstimatedAmountCard({ name, amount, ratioLabel }: EstimatedAmountCardProps) {
@@ -68,12 +68,14 @@ export function EstimatedAmountCard({ name, amount, ratioLabel }: EstimatedAmoun
           {amount}
         </Text>
       </View>
-      <Text
-        className="text-white mt-1.5"
-        style={{ fontSize: 12, fontWeight: '400', letterSpacing: -0.2, opacity: 0.85 }}
-      >
-        {ratioLabel}
-      </Text>
+      {ratioLabel ? (
+        <Text
+          className="text-white mt-1.5"
+          style={{ fontSize: 12, fontWeight: '400', letterSpacing: -0.2, opacity: 0.85 }}
+        >
+          {ratioLabel}
+        </Text>
+      ) : null}
     </LinearGradient>
   );
 }
