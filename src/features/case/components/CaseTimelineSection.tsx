@@ -1,11 +1,11 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { CaseProgress, TimelineResponse, TimelineStepStatus } from '@/api/caseApi';
 import { colors } from '@/shared/constants/colors';
 import type { Section } from '@/store/caseProgressStore';
 import { formatEventDate, getStepTypeLabel } from '../progressFormat';
 import { TimelineCheck } from './CheckMarks';
-import { Chip, SectionCard, SectionEmpty, SectionError, SectionSkeleton, SectionTitle } from './CaseSectionParts';
+import { AddButton, Chip, SectionCard, SectionEmpty, SectionError, SectionSkeleton, SectionTitle } from './CaseSectionParts';
 
 const DOT_AREA_WIDTH = 24;
 const LINE_GAP = 4;
@@ -44,7 +44,7 @@ function Dot({ status }: { status: TimelineStepStatus }) {
   return <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#fff', borderWidth: 2, borderColor: colors.border }} />;
 }
 
-function TimelineRow({ item, prev, isLast }: { item: TimelineResponse; prev: TimelineResponse | null; isLast: boolean }) {
+function TimelineRow({ item, prev, isLast, onPress }: { item: TimelineResponse; prev: TimelineResponse | null; isLast: boolean; onPress: () => void }) {
   const top = dotTop(item.stepStatus);
   const size = dotSize(item.stepStatus);
   const kindLabel = getStepTypeLabel(item.stepType);
@@ -52,7 +52,8 @@ function TimelineRow({ item, prev, isLast }: { item: TimelineResponse; prev: Tim
   const date = formatEventDate(item.eventDate);
 
   return (
-    <View className="flex-row" style={{ gap: 14, paddingBottom: isLast ? 0 : 16 }}>
+    // 행 전체를 누르면 단계 수정 시트가 열린다(눌림 시 시각 변화 없음).
+    <Pressable onPress={onPress} className="flex-row" style={{ gap: 14, paddingBottom: isLast ? 0 : 16 }}>
       <View style={{ width: DOT_AREA_WIDTH, alignSelf: 'stretch' }}>
         {/* 이전 항목에서 내려온 선: 점 위 4px까지 */}
         {prev && top - LINE_GAP > 0 && (
@@ -97,18 +98,30 @@ function TimelineRow({ item, prev, isLast }: { item: TimelineResponse; prev: Tim
         )}
         {!!date && <Text style={{ marginTop: 4, fontSize: 11, fontWeight: '500', color: colors.text3 }}>{date}</Text>}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
-export function CaseTimelineSection({ section, progress, onRetry }: { section: Section<TimelineResponse>; progress: CaseProgress; onRetry: () => void }) {
+export function CaseTimelineSection({
+  section,
+  progress,
+  onRetry,
+  onAdd,
+  onEdit,
+}: {
+  section: Section<TimelineResponse>;
+  progress: CaseProgress;
+  onRetry: () => void;
+  onAdd: () => void;
+  onEdit: (item: TimelineResponse) => void;
+}) {
   let content;
   if (section.status === 'error') {
     content = <SectionError onRetry={onRetry} />;
   } else if (section.status !== 'loaded') {
     content = <SectionSkeleton />;
   } else if (section.items.length === 0) {
-    content = <SectionEmpty text="아직 진행 상황이 없어요" />;
+    content = <SectionEmpty text="아직 진행 상황이 없어요" cta={{ label: '첫 단계 추가하기', onPress: onAdd }} />;
   } else {
     content = (
       <SectionCard>
@@ -119,7 +132,13 @@ export function CaseTimelineSection({ section, progress, onRetry }: { section: S
           </Text>
         </View>
         {section.items.map((item, index) => (
-          <TimelineRow key={item.id} item={item} prev={index > 0 ? section.items[index - 1] : null} isLast={index === section.items.length - 1} />
+          <TimelineRow
+            key={item.id}
+            item={item}
+            prev={index > 0 ? section.items[index - 1] : null}
+            isLast={index === section.items.length - 1}
+            onPress={() => onEdit(item)}
+          />
         ))}
       </SectionCard>
     );
@@ -127,7 +146,7 @@ export function CaseTimelineSection({ section, progress, onRetry }: { section: S
 
   return (
     <View style={{ marginTop: 20 }}>
-      <SectionTitle title="진행 상황" />
+      <SectionTitle title="진행 상황" right={<AddButton onPress={onAdd} />} />
       {content}
     </View>
   );

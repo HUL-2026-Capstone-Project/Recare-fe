@@ -105,6 +105,21 @@ export type TodoResponse = {
   updatedAt: string;
 };
 
+// 스웨거 CreateTimelineRequest / UpdateTimelineRequest (title 100자, description 255자). 수정은 보낸 항목만 바뀐다.
+export type CreateTimelineRequest = {
+  stepType: TimelineStepType;
+  title: string;
+  stepStatus?: TimelineStepStatus;
+  description?: string;
+  eventDate?: string;
+  sortOrder?: number;
+};
+export type UpdateTimelineRequest = Partial<Omit<CreateTimelineRequest, 'sortOrder'>>;
+
+// 스웨거 CreateTodoRequest / UpdateTodoRequest (title 150자, description 255자).
+export type CreateTodoRequest = { title: string; description?: string; priority?: TodoPriority; dueDate?: string };
+export type UpdateTodoRequest = Partial<CreateTodoRequest & { status: TodoStatus }>;
+
 // 스웨거 CreateCaseRequest. 필수는 title, accidentType, accidentDate이고 hasWorkStop을 보내지 않으면 서버가 false로 본다.
 export type CreateCaseRequest = {
   title: string;
@@ -169,6 +184,36 @@ export const caseApi = {
 
   async changeTodoStatus(caseId: number, todoId: number, status: TodoStatus): Promise<TodoResponse> {
     const { data } = await apiClient.patch<TodoResponse>(`/api/v1/cases/${caseId}/todos/${todoId}/status`, { status });
+    return data;
+  },
+
+  async createTimeline(caseId: number, body: CreateTimelineRequest): Promise<TimelineResponse> {
+    const { data } = await apiClient.post<TimelineResponse>(`/api/v1/cases/${caseId}/timeline`, body);
+    return data;
+  },
+
+  async updateTimeline(caseId: number, timelineId: number, body: UpdateTimelineRequest): Promise<TimelineResponse> {
+    const { data } = await apiClient.patch<TimelineResponse>(`/api/v1/cases/${caseId}/timeline/${timelineId}`, body);
+    return data;
+  },
+
+  async createTodo(caseId: number, body: CreateTodoRequest): Promise<TodoResponse> {
+    const { data } = await apiClient.post<TodoResponse>(`/api/v1/cases/${caseId}/todos`, body);
+    return data;
+  },
+
+  async updateTodo(caseId: number, todoId: number, body: UpdateTodoRequest): Promise<TodoResponse> {
+    const { data } = await apiClient.patch<TodoResponse>(`/api/v1/cases/${caseId}/todos/${todoId}`, body);
+    return data;
+  },
+
+  async deleteTodo(caseId: number, todoId: number): Promise<void> {
+    await apiClient.delete(`/api/v1/cases/${caseId}/todos/${todoId}`);
+  },
+
+  // 상태는 어디에서 어디로든 바뀐다. 응답의 progress가 새 단계 표시다.
+  async changeCaseStatus(caseId: number, status: CaseStatus): Promise<CaseResponse> {
+    const { data } = await apiClient.patch<CaseResponse>(`/api/v1/cases/${caseId}/status`, { status });
     return data;
   },
 

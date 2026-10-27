@@ -1,8 +1,9 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
 import { CARD_SHADOW } from '@/features/case/constants';
 import type { SummaryTag } from '@/features/case/mocks';
+import { ChevronDownSmallIcon } from './SheetIcons';
 
 type CaseSummaryCardProps = {
   caseNumber?: string;
@@ -12,6 +13,8 @@ type CaseSummaryCardProps = {
   title: string;
   info: { label: string; value: string }[];
   tags?: SummaryTag[];
+  // 있으면 상태 배지를 눌러 상태를 바꿀 수 있고, 배지에 아래 화살표가 붙는다.
+  onPressStatus?: () => void;
 };
 
 export function CaseSummaryCard({
@@ -22,6 +25,7 @@ export function CaseSummaryCard({
   title,
   info,
   tags,
+  onPressStatus,
 }: CaseSummaryCardProps) {
   return (
     <View className="bg-white p-4" style={{ borderRadius: 20, ...CARD_SHADOW }}>
@@ -36,14 +40,21 @@ export function CaseSummaryCard({
         ) : (
           <View />
         )}
-        <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: statusBg }}>
+        <Pressable
+          onPress={onPressStatus}
+          disabled={!onPressStatus}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          className="px-3 py-1.5 rounded-full flex-row items-center"
+          style={{ backgroundColor: statusBg, gap: 4 }}
+        >
           <Text
             className="text-[12px] font-semibold"
             style={{ color: statusFg, letterSpacing: -0.2 }}
           >
             {status}
           </Text>
-        </View>
+          {onPressStatus && <ChevronDownSmallIcon color={statusFg} size={10} />}
+        </Pressable>
       </View>
 
       <Text
