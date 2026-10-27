@@ -5,9 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/shared/constants/colors';
 import { useBenefitStore } from '@/store/benefitStore';
 import { useCaseStore } from '@/store/caseStore';
+import { useProfileStore } from '@/store/profileStore';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { SectionHeader } from '@/features/home/components/SectionHeader';
-import { homeMock } from '@/features/home/components/mocks';
 import { EstimatedAmountCard } from '@/features/calculator/components/EstimatedAmountCard';
 import { CalculationInfoCard } from '@/features/calculator/components/CalculationInfoCard';
 import { CalculationHistoryCard } from '@/features/calculator/components/CalculationHistoryCard';
@@ -31,6 +31,9 @@ export default function CalculatorScreen() {
   const fetchCases = useCaseStore((state) => state.fetchCases);
   const activeCase = cases.find((c) => c.progress.group === 'ACTIVE');
 
+  const profile = useProfileStore((state) => state.profile);
+  const fetchProfile = useProfileStore((state) => state.fetchProfile);
+
   const result = useBenefitStore((state) => state.result);
   const status = useBenefitStore((state) => state.status);
   const preview = useBenefitStore((state) => state.preview);
@@ -38,6 +41,11 @@ export default function CalculatorScreen() {
   useEffect(() => {
     if (useCaseStore.getState().cases.length === 0) fetchCases();
   }, [fetchCases]);
+
+  // 결과 카드의 이름은 프로필에서 가져온다. 아직 없으면 기존 방식대로 불러온다.
+  useEffect(() => {
+    if (!profile) fetchProfile();
+  }, [profile, fetchProfile]);
 
   // 사용자가 아직 요양기간을 건드리지 않았을 때만 케이스 값으로 채운다.
   useEffect(() => {
@@ -93,7 +101,7 @@ export default function CalculatorScreen() {
           >
             {result?.estimatedAmount != null && (
               <EstimatedAmountCard
-                name={homeMock.user.name}
+                name={profile?.name ?? ''}
                 amount={formatWon(result.estimatedAmount)}
                 ratioLabel={result.headlineRule?.label ?? undefined}
               />

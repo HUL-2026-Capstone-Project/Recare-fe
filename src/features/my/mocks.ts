@@ -6,11 +6,6 @@ export const myMock = {
     phone: '010-0000-0000',
     email: 'hyungjin@recare.kr',
   },
-  stats: [
-    { id: 'cases' as const, value: '3', label: '진행 케이스' },
-    { id: 'documents' as const, value: '12', label: '제출 서류' },
-    { id: 'notifications' as const, value: '5', label: '받은 알림' },
-  ],
   accountMenu: [
     { label: '프로필 정보 수정', icon: 'user' as const },
     { label: '비밀번호 변경', icon: 'lock' as const },
