@@ -5,6 +5,7 @@ import type {
   BenefitCalculationResponse,
   BenefitHistoryResponse,
   BenefitInputRequest,
+  BenefitPreviewRequest,
   BenefitResponse,
 } from '@/api/benefitApi';
 import { getErrorMessage } from '@/api/errorMessage';
@@ -20,6 +21,7 @@ type BenefitState = {
   errorMessage: string | null;
   fetchBenefit: (caseId: number) => Promise<void>;
   calculate: (caseId: number, request: BenefitInputRequest) => Promise<void>;
+  preview: (request: BenefitPreviewRequest) => Promise<void>;
   reset: () => void;
 };
 
@@ -39,8 +41,12 @@ export const useBenefitStore = create<BenefitState>((set) => ({
     const seq = ++requestSeq;
     set({ status: 'loading', errorMessage: null });
     try {
+      // 저장된 입력이 없는 케이스는 404다. 오류가 아니라 "저장된 입력 없음(빈 폼)"으로 보고 input을 null로 둔다.
       const [input, histories] = await Promise.all([
-        benefitApi.getBenefit(caseId),
+        benefitApi.getBenefit(caseId).catch((e: ApiError) => {
+          if (e.status === 404) return null;
+          throw e;
+        }),
         benefitApi.getBenefitHistories(caseId),
       ]);
       if (seq !== requestSeq) return;
@@ -65,6 +71,21 @@ export const useBenefitStore = create<BenefitState>((set) => ({
       set({ result, histories, status: 'success' });
     } catch (e) {
       if (seq !== requestSeq) return;
+      set({ status: 'error', errorMessage: getErrorMessage(e as ApiError) });
+    }
+  },
+
+  // 케이스 없이 계산(저장·이력 없음). 결과만 보관하고 histories는 건드리지 않는다.
+  preview: async (request) => {
+    const seq = ++requestSeq;
+    set({ status: 'loading', errorMessage: null });
+    try {
+      const result = await benefitApi.previewBenefit(request);
+      if (seq !== requestSeq) return;
+      set({ result, status: 'success' });
+    } catch (e) {
+      if (seq !== requestSeq) return;
+      // TODO(디자인 필요): 계산기에 오류 UI가 시안에 없어 상태값만 남긴다.
       set({ status: 'error', errorMessage: getErrorMessage(e as ApiError) });
     }
   },

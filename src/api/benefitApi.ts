@@ -17,6 +17,9 @@ export type BenefitInputRequest = {
   partialWorkDays?: PartialWorkDay[];
 };
 
+// 케이스 없이 계산하는 preview 요청. 스웨거상 BenefitInputRequest + accidentDate(생략하면 서버가 요양 시작일로 계산).
+export type BenefitPreviewRequest = BenefitInputRequest & { accidentDate?: string };
+
 export type BenefitResponse = {
   caseId?: number | null;
   wageInputType?: WageInputType | null;
@@ -87,14 +90,22 @@ export const benefitApi = {
     return data;
   },
 
+  // 부분 본문은 저장값과 병합, 목록(제외일·부분휴업일)은 통째 교체, 제외일수를 비울 땐 0을 보낸다(백엔드 답변).
   async updateBenefit(caseId: number, body: BenefitInputRequest): Promise<BenefitResponse> {
     const { data } = await apiClient.patch<BenefitResponse>(`/api/v1/cases/${caseId}/benefit`, body);
     return data;
   },
 
   // 본문을 보내면 서버가 저장 후 계산하고 이력을 남긴다(스웨거 summary). 호출할 때마다 이력이 쌓인다.
+  // 부분 본문은 저장값과 병합, 목록(제외일·부분휴업일)은 통째 교체, 제외일수를 비울 땐 0을 보낸다(백엔드 답변).
   async calculateBenefit(caseId: number, body: BenefitInputRequest): Promise<BenefitCalculationResponse> {
     const { data } = await apiClient.post<BenefitCalculationResponse>(`/api/v1/cases/${caseId}/benefit/calculate`, body);
+    return data;
+  },
+
+  // 홈 계산기용. 케이스 없이 계산하고 저장·이력을 남기지 않는다. 응답은 calculate와 같다.
+  async previewBenefit(body: BenefitPreviewRequest): Promise<BenefitCalculationResponse> {
+    const { data } = await apiClient.post<BenefitCalculationResponse>('/api/v1/benefit/preview', body);
     return data;
   },
 };
