@@ -1,12 +1,16 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/shared/constants/colors';
 import { useCaseStore } from '@/store/caseStore';
+import { EMPTY_SECTION, useCaseProgressStore } from '@/store/caseProgressStore';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { CaseSummaryCard } from '@/features/case/components/CaseSummaryCard';
+import { ActionToast } from '@/features/case/components/ActionToast';
+import { CaseTimelineSection } from '@/features/case/components/CaseTimelineSection';
+import { CaseTodoSection } from '@/features/case/components/CaseTodoSection';
 import { toSummaryCardProps } from '@/features/case/caseMapper';
 
 // 서버 상세로 채울 수 있는 요약 영역만 보여준다. 타임라인·할 일은 다음 작업에서 연결하고,
@@ -18,9 +22,39 @@ export default function CaseDetailScreen() {
   const detail = useCaseStore((state) => state.details[caseId]);
   const fetchCase = useCaseStore((state) => state.fetchCase);
 
+  const timeline = useCaseProgressStore((state) => state.timelines[caseId]) ?? EMPTY_SECTION;
+  const todos = useCaseProgressStore((state) => state.todos[caseId]) ?? EMPTY_SECTION;
+  const loadTimeline = useCaseProgressStore((state) => state.loadTimeline);
+  const loadTodos = useCaseProgressStore((state) => state.loadTodos);
+  const toggleTodo = useCaseProgressStore((state) => state.toggleTodo);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    if (Number.isFinite(caseId)) fetchCase(caseId);
-  }, [caseId, fetchCase]);
+    if (!Number.isFinite(caseId)) return;
+    fetchCase(caseId);
+    // 두 섹션은 서로 독립이다. 이미 받아 둔 값이 있으면 보여주면서 다시 불러온다.
+    loadTimeline(caseId);
+    loadTodos(caseId);
+  }, [caseId, fetchCase, loadTimeline, loadTodos]);
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    []
+  );
+
+  const handleToggle = useCallback(
+    async (todoId: number) => {
+      const result = await toggleTodo(caseId, todoId);
+      if (result !== 'failed') return;
+      setToastMessage('변경하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+    },
+    [caseId, toggleTodo]
+  );
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -39,8 +73,15 @@ export default function CaseDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 4, paddingBottom: Math.max(bottom, 32) }}
       >
-        {detail && <CaseSummaryCard {...toSummaryCardProps(detail)} />}
+        {detail && (
+          <>
+            <CaseSummaryCard {...toSummaryCardProps(detail)} />
+            <CaseTimelineSection section={timeline} progress={detail.progress} onRetry={() => loadTimeline(caseId)} />
+            <CaseTodoSection section={todos} onToggle={handleToggle} onRetry={() => loadTodos(caseId)} />
+          </>
+        )}
       </ScrollView>
+      <ActionToast message={toastMessage} />
     </View>
   );
 }
