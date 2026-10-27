@@ -33,8 +33,7 @@ export default function CasesScreen() {
   ];
   const filteredCases = selectedFilter === '전체' ? cases : selectedFilter === '진행 중' ? activeCases : closedCases;
 
-  // TODO: 사건 등록 화면 구현 후 연결
-  const handleRegisterCase = () => {};
+  const handleRegisterCase = () => router.push({ pathname: '/case-form', params: { mode: 'create' } });
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -53,7 +52,7 @@ export default function CasesScreen() {
             style={{ width: 14, height: 14, tintColor: '#fff' }}
           />
           <Text className="text-white text-[13px] font-bold" style={{ letterSpacing: -0.3 }}>
-            사건 등록하기
+            케이스 등록
           </Text>
         </TouchableOpacity>
       </View>

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/shared/constants/colors';
@@ -24,7 +24,16 @@ export default function CaseDetailScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
-      <CaseDetailHeader />
+      <CaseDetailHeader
+        right={
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push({ pathname: '/case-form', params: { mode: 'edit', id: String(caseId) } })}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary, letterSpacing: -0.3 }}>수정</Text>
+          </TouchableOpacity>
+        }
+      />
       <ScrollView
         className="flex-1 px-5"
         showsVerticalScrollIndicator={false}

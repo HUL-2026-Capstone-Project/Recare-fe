@@ -79,7 +79,7 @@ function AmountInputField({
   );
 }
 
-function CalendarGlyph() {
+export function CalendarGlyph() {
   return (
     <View style={{ width: 16, height: 16 }}>
       <View style={{ position: 'absolute', top: 0, left: 3, width: 2, height: 4, borderRadius: 1, backgroundColor: colors.text3 }} />
