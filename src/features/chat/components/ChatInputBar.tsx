@@ -8,10 +8,10 @@ import { PlusIcon, SendButtonIcon } from './icons';
 export function ChatInputBar() {
   const [value, setValue] = useState('');
   const send = useChatStore((state) => state.send);
-  const isSending = useChatStore((state) => state.isSending);
+  const isStreaming = useChatStore((state) => state.isStreaming);
 
   const handleSend = () => {
-    if (isSending || !value.trim()) return;
+    if (isStreaming || !value.trim()) return;
     const question = value;
     setValue('');
     send(question);
@@ -47,9 +47,11 @@ export function ChatInputBar() {
         }}
       />
 
+      {/* 답변을 받는 동안에는 전송만 막는다(입력은 계속 가능). */}
       <Pressable
         onPress={handleSend}
-        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}
+        disabled={isStreaming}
+        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: isStreaming ? colors.primaryDisabled : colors.primary, alignItems: 'center', justifyContent: 'center' }}
       >
         <SendButtonIcon size={18} />
       </Pressable>
