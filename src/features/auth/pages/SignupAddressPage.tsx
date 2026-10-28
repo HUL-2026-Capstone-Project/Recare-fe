@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useSignupStore } from '@/store/signupStore';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { TERMS_ITEMS } from '@/features/auth/constants/terms';
+import { AddressSearchModal } from '@/features/address/components/AddressSearchModal';
 
 function TermsCheckCircle({ checked, size }: { checked: boolean; size: number }) {
   return (
@@ -30,13 +31,12 @@ export default function SignUpAddressScreen() {
   const [detailFocused, setDetailFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [addressSearchOpen, setAddressSearchOpen] = useState(false);
 
   const allAgreed = termsAgree.every(Boolean);
   const ready = addr.trim().length > 0 && TERMS_ITEMS.every((item, i) => !item.required || termsAgree[i]);
 
-  // TODO: 주소 검색은 외부 우편번호 서비스(Daum/Kakao)를 WebView로 띄우는 방식인데,
-  // react-native-webview가 설치돼 있지 않아 연동을 보류한다. 라이브러리 설치 후 선택 결과를 setAddr로 채우면 된다.
-  const handleOpenAddressSearch = () => {};
+  const handleOpenAddressSearch = () => setAddressSearchOpen(true);
 
   const handleToggleAll = () => {
     setTermsAgree(TERMS_ITEMS.map(() => !allAgreed));
@@ -250,6 +250,8 @@ export default function SignUpAddressScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <AddressSearchModal visible={addressSearchOpen} onClose={() => setAddressSearchOpen(false)} onSelect={setAddr} />
     </View>
   );
 }
