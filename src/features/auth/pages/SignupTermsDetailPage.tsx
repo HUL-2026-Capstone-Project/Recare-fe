@@ -47,7 +47,7 @@ export default function SignupTermsDetailScreen() {
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12 }}>
         <Text className="text-[12px] mb-4" style={{ color: colors.text3, letterSpacing: -0.2 }}>
-          시행일 2026.01.01 · 버전 {item?.termsVersion ?? '1.0'}
+          버전 {item?.termsVersion ?? '1.0'}
         </Text>
         {body.map(([heading, text], i) => (
           <View key={heading} style={{ marginBottom: i === body.length - 1 ? 0 : 20 }}>
