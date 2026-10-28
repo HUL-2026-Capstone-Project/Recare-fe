@@ -9,7 +9,7 @@ export type TermsLoadStatus = 'idle' | 'loading' | 'loaded' | 'error';
 // 종류별 동의 시각(agreedAt). null이면 동의하지 않은 것이다.
 export type TermsAgreements = Record<TermsType, string | null>;
 
-const EMPTY_AGREEMENTS: TermsAgreements = { SERVICE: null, PRIVACY: null, MARKETING: null };
+const EMPTY_AGREEMENTS: TermsAgreements = { SERVICE: null, PRIVACY: null, SENSITIVE: null, MARKETING: null };
 
 type TermsState = {
   status: TermsLoadStatus;

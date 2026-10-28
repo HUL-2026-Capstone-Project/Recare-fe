@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { authApi } from '@/api/authApi';
 import type { SignUpRequest } from '@/api/authApi';
-import { buildTermsAgreements } from '@/features/auth/constants/terms';
+import { TERMS_ITEMS, buildTermsAgreements } from '@/features/auth/constants/terms';
 import { tokenStorage } from '@/shared/lib/tokenStorage';
 import { useAuthStore } from './authStore';
 
@@ -15,6 +15,9 @@ type SignupDraft = {
   carrier: string; // 서버 코드(SKT|KT|LGU|MVNO), UI 라벨이 아님
   phone: string;
 };
+
+// 약관 동의 체크 상태. TERMS_ITEMS와 같은 순서·같은 길이의 배열이라 약관이 늘어도 길이를 따로 고치지 않는다.
+const initialTermsAgree = () => TERMS_ITEMS.map(() => false);
 
 type SignupState = {
   draft: SignupDraft | null;
@@ -30,7 +33,7 @@ type SignupState = {
 
 export const useSignupStore = create<SignupState>((set, get) => ({
   draft: null,
-  termsAgree: [false, false, false],
+  termsAgree: initialTermsAgree(),
 
   setStep1: (draft) => set({ draft }),
 
@@ -64,8 +67,8 @@ export const useSignupStore = create<SignupState>((set, get) => ({
     await tokenStorage.setTokens(res.accessToken, res.refreshToken, res.tokenType);
     useAuthStore.setState({ status: 'authenticated' });
     // 가입 성공 후 메모리에 있던 입력값(비밀번호, 주민번호, 약관 체크 상태 포함)을 비운다.
-    set({ draft: null, termsAgree: [false, false, false] });
+    set({ draft: null, termsAgree: initialTermsAgree() });
   },
 
-  reset: () => set({ draft: null, termsAgree: [false, false, false] }),
+  reset: () => set({ draft: null, termsAgree: initialTermsAgree() }),
 }));

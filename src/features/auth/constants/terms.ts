@@ -1,6 +1,6 @@
 import type { TermsAgreement, TermsType } from '@/api/authApi';
 
-// termsType은 스웨거 TermsAgreementRequest의 enum(SERVICE|PRIVACY|MARKETING)과 같다.
+// termsType은 스웨거 TermsAgreementRequest의 enum(SERVICE|PRIVACY|SENSITIVE|MARKETING)과 같다.
 // TODO: termsVersion("1.0")은 앱이 정한 값이다. 스웨거에는 허용 값 없이 최대 20자 문자열로만 적혀 있어 백엔드 확인이 필요하다.
 export type TermsItem = {
   termsType: TermsType;
@@ -12,6 +12,7 @@ export type TermsItem = {
 export const TERMS_ITEMS: TermsItem[] = [
   { termsType: 'SERVICE', termsVersion: '1.0', required: true, title: '서비스 이용약관 동의' },
   { termsType: 'PRIVACY', termsVersion: '1.0', required: true, title: '개인정보 수집 및 이용 동의' },
+  { termsType: 'SENSITIVE', termsVersion: '1.0', required: true, title: '민감정보 처리 동의' },
   { termsType: 'MARKETING', termsVersion: '1.0', required: false, title: '마케팅 정보 수신 동의' },
 ];
 

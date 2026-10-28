@@ -27,7 +27,7 @@ export type EmailVerifySendRequest = { email: string; purpose?: VerifyPurpose };
 export type EmailVerifyCheckRequest = { email: string; code: string; purpose?: VerifyPurpose };
 
 // 스웨거 TermsAgreementRequest.termsType enum. 항목이 있으면 그 약관에 동의한 것이다(동의 여부 필드는 없음).
-export type TermsType = 'SERVICE' | 'PRIVACY' | 'MARKETING';
+export type TermsType = 'SERVICE' | 'PRIVACY' | 'SENSITIVE' | 'MARKETING';
 export type TermsAgreement = { termsType: TermsType; termsVersion: string };
 
 // carrier는 스웨거 패턴 ^(SKT|KT|LGU|MVNO)$
