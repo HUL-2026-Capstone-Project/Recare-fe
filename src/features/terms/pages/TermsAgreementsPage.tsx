@@ -13,7 +13,7 @@ import { Card } from '@/features/home/components/Card';
 import { ChevronRightGray } from '@/features/my/components/icons';
 import { useTermsStore } from '@/store/termsStore';
 import { AgreeConfirmModal } from '../components/AgreeConfirmModal';
-import { TERMS_DISPLAY_NAMES } from '../termsDisplay';
+import { TERMS_DETAIL_TITLES, TERMS_DISPLAY_NAMES } from '../termsDisplay';
 
 function SkeletonCard() {
   return (
@@ -78,7 +78,7 @@ export default function TermsAgreementsScreen() {
   }, [fetchAgreements]);
 
   const openDetail = (termsType: TermsType) =>
-    router.push({ pathname: '/terms-detail', params: { type: termsType, title: TERMS_DISPLAY_NAMES[termsType] } });
+    router.push({ pathname: '/terms-detail', params: { type: termsType, title: TERMS_DETAIL_TITLES[termsType] ?? TERMS_DISPLAY_NAMES[termsType] } });
 
   const closeConfirm = () => {
     setConfirmType(null);

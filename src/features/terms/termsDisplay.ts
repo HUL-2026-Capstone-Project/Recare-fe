@@ -7,6 +7,12 @@ export type DisplayTermsType = TermsType | 'PRIVACY_POLICY';
 export const TERMS_DISPLAY_NAMES: Record<DisplayTermsType, string> = {
   SERVICE: '서비스 이용약관',
   PRIVACY: '개인정보 수집 및 이용',
+  SENSITIVE: '민감정보 처리',
   MARKETING: '마케팅 정보 수신',
   PRIVACY_POLICY: '개인정보 처리방침',
+};
+
+// 읽기 전용 상세 화면 제목이 카드 이름과 다른 종류
+export const TERMS_DETAIL_TITLES: Partial<Record<DisplayTermsType, string>> = {
+  SENSITIVE: '민감정보 처리 동의',
 };
