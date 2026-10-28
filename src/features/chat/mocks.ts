@@ -1,13 +1,27 @@
+import type { Source } from '@/api/chatApi';
+
 export type ChatQuickReply = {
   id: string;
   label: string;
   primary?: boolean;
 };
 
+// AI 답변 한 건. waiting: 첫 조각 전(상태 문구), streaming: 받는 중, done: 정상 종료, error: 실패(받은 조각이 있으면 중간 끊김).
+export type ChatAnswerPhase = 'waiting' | 'streaming' | 'done' | 'error';
+
 export type ChatMessage =
   | { id: string; type: 'date'; text: string }
   | { id: string; type: 'bot'; text: string }
-  | { id: string; type: 'pending' }
+  | {
+      id: string;
+      type: 'answer';
+      question: string;
+      phase: ChatAnswerPhase;
+      statusText: string | null;
+      // 서버가 준 순서대로의 줄. 답변은 줄마다 별도 블록으로 그린다.
+      lines: string[];
+      sources: Source[];
+    }
   | { id: string; type: 'quickReplies'; items: ChatQuickReply[] }
   | { id: string; type: 'user'; text: string };
 
