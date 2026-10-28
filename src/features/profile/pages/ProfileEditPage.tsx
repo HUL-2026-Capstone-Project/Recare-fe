@@ -9,6 +9,7 @@ import { svgAssetUri } from '@/shared/lib/svgAsset';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { useProfileStore } from '@/store/profileStore';
 import type { UserUpdateRequest } from '@/api/userApi';
+import { AddressSearchModal } from '@/features/address/components/AddressSearchModal';
 import { VerifiedCheckIcon } from '../components/icons';
 import { NONE_LABEL, LANGUAGE_LABELS, formatDate, formatGender, formatPhone } from '../mocks';
 
@@ -76,7 +77,7 @@ export default function ProfileEditScreen() {
   const [email, setEmail] = useState(profile?.email ?? '');
   const [emailFocused, setEmailFocused] = useState(false);
   const [addressBase, setAddressBase] = useState(initialBase);
-  const [addressBaseFocused, setAddressBaseFocused] = useState(false);
+  const [addressSearchOpen, setAddressSearchOpen] = useState(false);
   const [addressDetail, setAddressDetail] = useState(initialDetail);
   const [addressDetailFocused, setAddressDetailFocused] = useState(false);
   const [language, setLanguage] = useState(profile?.language ?? 'KO');
@@ -89,9 +90,7 @@ export default function ProfileEditScreen() {
   if (!profile) return null;
 
   // 시안에 없는 UI(검증 오류, 로딩 표시, 토스트)는 만들지 않는다.
-  const handleAddressSearch = () => {
-    // TODO: 주소 검색(WebView 등) 연결은 다음 작업에서 처리
-  };
+  const handleAddressSearch = () => setAddressSearchOpen(true);
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -218,27 +217,19 @@ export default function ProfileEditScreen() {
         <View style={{ marginBottom: 18 }}>
           <FieldLabel>주소</FieldLabel>
           <View className="flex-row items-center" style={{ gap: 8, marginBottom: 8 }}>
-            <View
-              className="flex-1 flex-row items-center"
-              style={{
-                height: 52,
-                borderRadius: 12,
-                paddingHorizontal: 16,
-                backgroundColor: addressBaseFocused ? '#fff' : colors.input,
-                borderWidth: addressBaseFocused ? 1.5 : 0,
-                borderColor: colors.primary,
-              }}
+            {/* 가입 화면의 주소 칸과 같은 읽기 전용 칸: 눌러서 검색을 연다. */}
+            <TouchableOpacity
+              className="flex-1 h-[52px] bg-input rounded-xl px-4 justify-center"
+              activeOpacity={0.7}
+              onPress={handleAddressSearch}
             >
-              <TextInput
-                className="flex-1"
-                style={{ fontSize: 15, fontWeight: '500', color: colors.text1, letterSpacing: -0.3 }}
-                value={addressBase}
-                onChangeText={setAddressBase}
-                onFocus={() => setAddressBaseFocused(true)}
-                onBlur={() => setAddressBaseFocused(false)}
-                placeholderTextColor={colors.text3}
-              />
-            </View>
+              <Text
+                className="text-[15px]"
+                style={{ color: addressBase ? colors.text1 : colors.text3, letterSpacing: -0.3, fontWeight: addressBase ? '500' : '400' }}
+              >
+                {addressBase || '주소를 검색해 주세요'}
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={handleAddressSearch}
@@ -318,6 +309,8 @@ export default function ProfileEditScreen() {
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: -0.3 }}>저장하기</Text>
         </TouchableOpacity>
       </View>
+
+      <AddressSearchModal visible={addressSearchOpen} onClose={() => setAddressSearchOpen(false)} onSelect={setAddressBase} />
     </KeyboardAvoidingView>
   );
 }
