@@ -58,6 +58,8 @@ function RootLayoutNav() {
         <Stack.Screen name="profile-edit" options={{ headerShown: false }} />
         <Stack.Screen name="notification-settings" options={{ headerShown: false }} />
         <Stack.Screen name="change-password" options={{ headerShown: false }} />
+        <Stack.Screen name="terms-agreements" options={{ headerShown: false }} />
+        <Stack.Screen name="terms-detail" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

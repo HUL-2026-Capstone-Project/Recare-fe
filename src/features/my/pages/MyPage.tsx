@@ -68,7 +68,15 @@ export default function MyPage() {
           />
         )}
         <AccountMenuCard items={myMock.accountMenu} />
-        <PolicyMenuCard items={myMock.policyMenu} />
+        <PolicyMenuCard
+          items={myMock.policyMenu}
+          onPressItem={(index) => {
+            // 서비스 이용약관 / 개인정보 처리방침(동의 대상이 아닌 공개 문서) / 약관 및 동의
+            if (index === 0) router.push({ pathname: '/terms-detail', params: { type: 'SERVICE', title: '서비스 이용약관' } });
+            else if (index === 1) router.push({ pathname: '/terms-detail', params: { type: 'PRIVACY_POLICY', title: '개인정보 처리방침' } });
+            else router.push('/terms-agreements');
+          }}
+        />
 
         <View className="flex-row items-center justify-center" style={{ paddingTop: 8, paddingBottom: 4 }}>
           <Pressable

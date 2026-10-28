@@ -4,14 +4,13 @@ import { colors } from '@/shared/constants/colors';
 import { Card } from '@/features/home/components/Card';
 import { ChevronRightGray } from './icons';
 
-export function PolicyMenuCard({ items }: { items: string[] }) {
+export function PolicyMenuCard({ items, onPressItem }: { items: string[]; onPressItem: (index: number) => void }) {
   return (
     <Card style={{ padding: 4, marginBottom: 12 }}>
       {items.map((label, index) => (
         <Pressable
-          // 약관/방침 화면이 시안에 없어 스텁 처리 (TODO)
           key={label}
-          onPress={() => {}}
+          onPress={() => onPressItem(index)}
           className="flex-row items-center justify-between"
           style={{
             paddingVertical: 11,
