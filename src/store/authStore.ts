@@ -11,6 +11,7 @@ import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
 import { useHospitalStore } from './hospitalStore';
 import { useMyStatsStore } from './myStatsStore';
+import { useNotificationStore } from './notificationStore';
 import { useProfileStore } from './profileStore';
 import { useTermsStore } from './termsStore';
 
@@ -35,6 +36,7 @@ function clearSessionData() {
   useHospitalStore.getState().reset();
   useMyStatsStore.getState().reset();
   useTermsStore.getState().reset();
+  useNotificationStore.getState().reset();
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({

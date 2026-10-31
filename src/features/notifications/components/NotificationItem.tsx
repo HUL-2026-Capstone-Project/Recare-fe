@@ -1,16 +1,16 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
-import type { Notification } from '../mocks';
+import type { Notification } from '../types';
 import { NotificationTypeIcon } from './icons';
 
-export function NotificationItem({ item }: { item: Notification }) {
+export function NotificationItem({ item, onPress }: { item: Notification; onPress: () => void }) {
   const { read } = item;
 
   return (
     <Pressable
-      // 알림 항목 탭 동작이 시안에 없어 스텁 처리 (TODO)
-      onPress={() => {}}
+      // 읽지 않은 알림을 누르면 읽음 처리만 한다. link로의 이동은 시안이 없어 보류 (TODO)
+      onPress={onPress}
       className="flex-row"
       style={{
         gap: 12,

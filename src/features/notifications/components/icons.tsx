@@ -1,7 +1,7 @@
 import { SvgUri } from 'react-native-svg';
 
 import { svgAssetUri } from '@/shared/lib/svgAsset';
-import type { NotificationIcon } from '../mocks';
+import type { NotificationIcon } from '../types';
 
 const NOTIFICATION_ICON_FILES: Record<NotificationIcon, number> = {
   money: require('@/shared/assets/icons-svg/noti-money.svg'),
