@@ -11,14 +11,15 @@ import { CaseSummaryCard } from '@/features/case/components/CaseSummaryCard';
 import { ActionToast } from '@/features/case/components/ActionToast';
 import { CaseTimelineSection } from '@/features/case/components/CaseTimelineSection';
 import { CaseTodoSection } from '@/features/case/components/CaseTodoSection';
+import { CaseDocumentsBlock } from '@/features/case/components/CaseDocumentsBlock';
 import { CaseStatusSheet } from '@/features/case/components/CaseStatusSheet';
 import { TimelineEditSheet } from '@/features/case/components/TimelineEditSheet';
 import { TodoEditSheet } from '@/features/case/components/TodoEditSheet';
 import type { TimelineResponse, TodoResponse } from '@/api/caseApi';
 import { toSummaryCardProps } from '@/features/case/caseMapper';
 
-// 서버 상세로 채울 수 있는 요약 영역만 보여준다. 타임라인·할 일은 다음 작업에서 연결하고,
-// 진단 의료기관/진단일자/부상 태그, 서류 목록, 정산, 청력검사, 결정문 다운로드, 다음 단계 배너는 서버 데이터가 없어 그리지 않는다.
+// 서버 데이터로 채울 수 있는 요약, 타임라인, 할 일, 서류를 보여준다.
+// 정산, 청력검사, 결정문 다운로드, 다음 단계 배너는 서버 데이터가 없어 그리지 않는다.
 export default function CaseDetailScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { top, bottom } = useSafeAreaInsets();
@@ -31,7 +32,7 @@ export default function CaseDetailScreen() {
   const loadTimeline = useCaseProgressStore((state) => state.loadTimeline);
   const loadTodos = useCaseProgressStore((state) => state.loadTodos);
   const toggleTodo = useCaseProgressStore((state) => state.toggleTodo);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; bottom?: number } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 열려 있는 시트. 열 때마다 새로 마운트되어 입력값이 매번 초기화된다(item이 null이면 추가).
   const [timelineSheet, setTimelineSheet] = useState<{ item: TimelineResponse | null } | null>(null);
@@ -53,11 +54,15 @@ export default function CaseDetailScreen() {
     []
   );
 
-  const showFailureToast = useCallback(() => {
-    setToastMessage('변경하지 못했어요. 잠시 후 다시 시도해 주세요.');
+  const showToast = useCallback((message: string, bottom?: number) => {
+    setToast({ message, bottom });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const showFailureToast = useCallback(() => showToast('변경하지 못했어요. 잠시 후 다시 시도해 주세요.'), [showToast]);
+  // 서류 토스트는 시안대로 화면 아래에서 58 위에 보인다.
+  const showDocumentToast = useCallback((message: string) => showToast(message, 58), [showToast]);
 
   const handleToggle = useCallback(
     async (todoId: number) => {
@@ -101,10 +106,11 @@ export default function CaseDetailScreen() {
               onAdd={() => setTodoSheet({ item: null })}
               onEdit={(item) => setTodoSheet({ item })}
             />
+            <CaseDocumentsBlock caseId={caseId} showToast={showDocumentToast} />
           </>
         )}
       </ScrollView>
-      <ActionToast message={toastMessage} />
+      <ActionToast message={toast?.message ?? null} bottom={toast?.bottom} />
       {timelineSheet && <TimelineEditSheet caseId={caseId} item={timelineSheet.item} onClose={() => setTimelineSheet(null)} />}
       {todoSheet && <TodoEditSheet caseId={caseId} item={todoSheet.item} onClose={() => setTodoSheet(null)} onDeleteFailed={showFailureToast} />}
       {statusSheetOpen && detail && <CaseStatusSheet caseId={caseId} current={detail.status} onClose={() => setStatusSheetOpen(false)} />}
