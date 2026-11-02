@@ -9,44 +9,6 @@ export type TimelineStep = {
   state: TimelineStepState;
 };
 
-export type DocumentStatus = 'done' | 'pending' | 'required';
-export type DocumentIcon = 'doc' | 'check';
-export type DocumentTrailing = 'chip' | 'arrow';
-
-export type DocumentItem = {
-  name: string;
-  status: string;
-  statusType: DocumentStatus;
-  subtitle?: string;
-  icon?: DocumentIcon;
-  trailing?: DocumentTrailing;
-};
-
-export const DOCUMENT_STATUS_STYLE: Record<
-  DocumentStatus,
-  { chipBg: string; chipFg: string; iconBg: string; iconTint?: string; icon: number }
-> = {
-  done: {
-    chipBg: colors.chip.greenBg,
-    chipFg: colors.chip.greenFg,
-    iconBg: colors.chip.greenBg,
-    icon: require('@/shared/assets/icons/document-success.png'),
-  },
-  pending: {
-    chipBg: colors.chip.orangeBg,
-    chipFg: colors.chip.orangeFg,
-    iconBg: colors.primaryLight,
-    iconTint: colors.primary,
-    icon: require('@/shared/assets/icons/document.png'),
-  },
-  required: {
-    chipBg: colors.chip.redBg,
-    chipFg: colors.chip.redFg,
-    iconBg: colors.chip.redBg,
-    icon: require('@/shared/assets/icons/document-danger.png'),
-  },
-};
-
 export type SummaryTag = { label: string; bg: string; fg: string };
 
 export type ChecklistItem = { label: string; done: boolean };
@@ -90,10 +52,7 @@ export type CaseDetailData = {
   timeline: TimelineStep[];
   checklist?: ChecklistItem[];
   hearing?: HearingTestData;
-  documentsTitle?: string;
-  documents: DocumentItem[];
   actions?: BottomAction[];
-  downloadLabel?: string;
 };
 
 const CASE_DETAILS: Record<string, CaseDetailData> = {
@@ -118,11 +77,6 @@ const CASE_DETAILS: Record<string, CaseDetailData> = {
       { label: '심사 중', date: '02.04', desc: '근로복지공단 심사', state: 'current' },
       { label: '승인', date: '-', desc: '결과 통지 예정', state: 'pending' },
       { label: '종결', date: '-', desc: '보상금 지급 완료', state: 'pending' },
-    ],
-    documents: [
-      { name: '산업재해 신청서', status: '제출완료', statusType: 'done' },
-      { name: '의사 소견서', status: '검토중', statusType: 'pending' },
-      { name: '진료비 영수증', status: '첨부 필요', statusType: 'required' },
     ],
   },
   '2024-0289': {
@@ -160,32 +114,6 @@ const CASE_DETAILS: Record<string, CaseDetailData> = {
       { label: '주치의 소견서 발급 요청', done: true },
       { label: '엑스레이 영상 자료 수령', done: false },
       { label: '경위서 작성 및 제출', done: false },
-    ],
-    documents: [
-      {
-        name: '산업재해 신청서',
-        status: '제출완료',
-        statusType: 'done',
-        subtitle: '5장 · 2023.12.01',
-      },
-      {
-        name: '재해 발생 경위서',
-        status: '작성 중',
-        statusType: 'pending',
-        subtitle: '작성 진행 80%',
-      },
-      {
-        name: '의사 소견서',
-        status: '첨부 필요',
-        statusType: 'required',
-        subtitle: '담당의 첨부 대기',
-      },
-      {
-        name: '엑스레이 영상 (3건)',
-        status: '첨부 필요',
-        statusType: 'required',
-        subtitle: '정면 / 측면 / 사선',
-      },
     ],
     actions: [
       { label: '경위서 작성', variant: 'outline' },
@@ -237,50 +165,7 @@ const CASE_DETAILS: Record<string, CaseDetailData> = {
       verdictLabel: '판정',
       verdictText: '양측 70dB · 고도 난청 · 장해 6급',
     },
-    documentsTitle: '제출 서류',
-    documents: [
-      {
-        name: '산업재해 신청서',
-        status: '',
-        statusType: 'done',
-        subtitle: '2023.09.12 제출',
-        icon: 'check',
-        trailing: 'arrow',
-      },
-      {
-        name: '청력 검사 결과지',
-        status: '',
-        statusType: 'done',
-        subtitle: '순음청력검사 / 어음청력',
-        icon: 'check',
-        trailing: 'arrow',
-      },
-      {
-        name: '작업장 소음측정 기록',
-        status: '',
-        statusType: 'done',
-        subtitle: '10년치 기록 첨부',
-        icon: 'check',
-        trailing: 'arrow',
-      },
-      {
-        name: '재직 증명서',
-        status: '',
-        statusType: 'done',
-        subtitle: '근속 13년 4개월',
-        icon: 'check',
-        trailing: 'arrow',
-      },
-      {
-        name: '장해진단서',
-        status: '',
-        statusType: 'done',
-        subtitle: '장해 6급 (양측 70dB)',
-        icon: 'check',
-        trailing: 'arrow',
-      },
-    ],
-    downloadLabel: '결정문 다운로드 (PDF)',
+
   },
 };
 

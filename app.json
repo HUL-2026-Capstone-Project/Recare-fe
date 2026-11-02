@@ -38,6 +38,14 @@
         {
           "locationWhenInUsePermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "서류 첨부를 위해 사진첩에 접근해요",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

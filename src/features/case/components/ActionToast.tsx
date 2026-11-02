@@ -3,12 +3,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/shared/constants/colors';
 
-export function ActionToast({ message }: { message: string | null }) {
+// bottom을 주면 화면 아래에서 그 값만큼 띄우고(안전영역 별도 가산 없음), 없으면 기존처럼 안전영역 + 24다.
+export function ActionToast({ message, bottom: fixedBottom }: { message: string | null; bottom?: number }) {
   const { bottom } = useSafeAreaInsets();
   if (!message) return null;
 
   return (
-    <View pointerEvents="none" className="absolute left-0 right-0 items-center" style={{ bottom: bottom + 24 }}>
+    <View pointerEvents="none" className="absolute left-0 right-0 items-center" style={{ bottom: fixedBottom ?? bottom + 24 }}>
       <View
         className="justify-center"
         style={{
