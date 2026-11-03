@@ -5,6 +5,7 @@ import { router, useFocusEffect } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { useCaseStore } from '@/store/caseStore';
+import { useMyStatsStore } from '@/store/myStatsStore';
 import { useProfileStore } from '@/store/profileStore';
 import { toHomeSubtitle, toRecoveryPeriod } from '@/features/case/caseMapper';
 import { getStatusPresentation } from '@/features/case/statusMapper';
@@ -25,6 +26,8 @@ export default function HomeScreen() {
   const cases = useCaseStore((state) => state.cases);
   const listLoaded = useCaseStore((state) => state.listLoaded);
   const fetchCases = useCaseStore((state) => state.fetchCases);
+  const unreadCount = useMyStatsStore((state) => state.stats?.notificationCount ?? 0);
+  const fetchStats = useMyStatsStore((state) => state.fetchStats);
 
   // 대표 케이스 = 진행 중(progress.group이 ACTIVE)인 케이스 중 서버가 준 순서상 첫 번째(기본 정렬 createdAt 최신순).
   // 요양기간과 경위 요약은 목록 응답(summary)에 있어 상세를 따로 부르지 않는다.
@@ -36,16 +39,18 @@ export default function HomeScreen() {
     if (!profile) fetchProfile();
   }, [profile, fetchProfile]);
 
-  // 탭 화면은 마운트된 채로 남으므로 포커스될 때마다 목록을 새로 받는다.
+  // 탭 화면은 마운트된 채로 남으므로 포커스될 때마다 목록과 읽지 않은 알림 수(stats)를 새로 받는다.
+  // stats를 아직 받지 못했거나 실패하면 stats가 null이라 벨에 배지를 켜지 않는다.
   useFocusEffect(
     useCallback(() => {
       fetchCases();
-    }, [fetchCases])
+      fetchStats();
+    }, [fetchCases, fetchStats])
   );
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
-      <Header />
+      <Header hasUnread={unreadCount > 0} />
 
       <ScrollView
         className="flex-1 px-5"
