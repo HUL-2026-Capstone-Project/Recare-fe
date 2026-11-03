@@ -6,17 +6,16 @@ import { Card } from '@/features/home/components/Card';
 import { AccountMenuIcon, ChevronRightGray } from './icons';
 import type { myMock } from '../mocks';
 
-export function AccountMenuCard({ items }: { items: (typeof myMock)['accountMenu'] }) {
+export function AccountMenuCard({ items: allItems }: { items: (typeof myMock)['accountMenu'] }) {
+  // 서버에 알림 설정 API와 푸시 발송이 아직 없어 알림 설정 행은 숨긴다(화면과 라우트는 유지).
+  const items = allItems.filter((item) => item.icon !== 'bell');
+
   return (
     <Card style={{ padding: 4, marginBottom: 12 }}>
       {items.map((item, index) => (
         <Pressable
           key={item.label}
           onPress={() => {
-            if (item.icon === 'bell') {
-              router.push('/notification-settings');
-              return;
-            }
             if (item.icon === 'lock') {
               router.push('/change-password');
               return;

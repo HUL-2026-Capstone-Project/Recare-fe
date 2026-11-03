@@ -1,7 +1,10 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
+import { SvgUri } from 'react-native-svg';
 
-export function Header() {
+import { svgAssetUri } from '@/shared/lib/svgAsset';
+
+export function Header({ hasUnread }: { hasUnread: boolean }) {
   return (
     <View className="h-14 px-5 flex-row items-center justify-between">
       <View className="flex-row items-baseline">
@@ -13,10 +16,11 @@ export function Header() {
         </Text>
       </View>
       <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/notifications')}>
-        <Image
-          source={require('@/shared/assets/icons/bell-badge.png')}
-          style={{ width: 28, height: 28 }}
-        />
+        {hasUnread ? (
+          <Image source={require('@/shared/assets/icons/bell-badge.png')} style={{ width: 28, height: 28 }} />
+        ) : (
+          <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/bell.svg'))} width={28} height={28} />
+        )}
       </TouchableOpacity>
     </View>
   );
