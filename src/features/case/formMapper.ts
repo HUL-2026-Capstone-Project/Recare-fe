@@ -101,13 +101,15 @@ export function fromCase(detail: CaseResponse): CaseFormValues {
 }
 
 // 등록: 필수(title, accidentType, accidentDate) 외에 비어 있는 선택 필드는 보내지 않는다. 검증을 통과한 값이 전제다.
-export function toCreateRequest(values: CaseFormValues): CreateCaseRequest {
+// 자가진단에서 이어 등록할 때만 완료된 진단 세션 id(diagnosisSessionId)를 함께 보낸다.
+export function toCreateRequest(values: CaseFormValues, diagnosisSessionId?: number): CreateCaseRequest {
   const request: CreateCaseRequest = {
     title: values.title.trim(),
     accidentType: TYPE_TO_SERVER[values.type as CaseFormType],
     accidentDate: formDateToIso(values.date) as string,
     hasWorkStop: values.paused,
   };
+  if (diagnosisSessionId != null) request.diagnosisSessionId = diagnosisSessionId;
 
   const optionalTexts: [keyof CreateCaseRequest, string][] = [
     ['accidentDetail', values.subtype],

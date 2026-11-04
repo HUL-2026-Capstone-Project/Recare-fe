@@ -14,6 +14,7 @@ import { PeriodCard } from '../components/PeriodCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { CaseCard } from '../components/CaseCard';
 import { CaseEmptyCard } from '../components/CaseEmptyCard';
+import { DiagEntryCard } from '../components/DiagEntryCard';
 import { ClaimItem } from '../components/ClaimItem';
 import { FaqItem } from '../components/FaqItem';
 import { Card } from '../components/Card';
@@ -102,6 +103,8 @@ export default function HomeScreen() {
             )}
           </View>
         )}
+
+        <DiagEntryCard />
 
         <View className="mb-6">
           <SectionHeader title="다음 신청서를 제출할 수 있어요" />
