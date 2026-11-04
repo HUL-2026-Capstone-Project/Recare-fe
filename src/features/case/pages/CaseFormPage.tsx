@@ -53,7 +53,7 @@ const ERROR_ORDER: { key: keyof CaseFormErrors; section: string }[] = [
 
 // 등록과 수정이 같이 쓰는 화면. 입력값은 이 화면의 상태로만 두고 화면을 벗어나면 사라진다(저장소·로그에 남기지 않는다).
 export default function CaseFormScreen() {
-  const { mode, id } = useLocalSearchParams<{ mode?: string; id?: string }>();
+  const { mode, id, diagnosisSessionId } = useLocalSearchParams<{ mode?: string; id?: string; diagnosisSessionId?: string }>();
   const { top } = useSafeAreaInsets();
   const isEdit = mode === 'edit';
   const caseId = Number(id);
@@ -73,10 +73,14 @@ export default function CaseFormScreen() {
     );
   }
 
-  return <CaseForm original={isEdit ? detail : null} />;
+  // 자가진단에서 넘어온 세션 id는 등록 모드에서 양의 정수일 때만 쓴다(수정 모드나 잘못된 값은 무시).
+  const sessionIdParam = Number(diagnosisSessionId);
+  const sessionId = !isEdit && Number.isInteger(sessionIdParam) && sessionIdParam > 0 ? sessionIdParam : undefined;
+
+  return <CaseForm original={isEdit ? detail : null} diagnosisSessionId={sessionId} />;
 }
 
-function CaseForm({ original }: { original: CaseResponse | null }) {
+function CaseForm({ original, diagnosisSessionId }: { original: CaseResponse | null; diagnosisSessionId?: number }) {
   const { top, bottom } = useSafeAreaInsets();
   const navigation = useNavigation();
   const createCase = useCaseStore((state) => state.createCase);
@@ -173,7 +177,7 @@ function CaseForm({ original }: { original: CaseResponse | null }) {
       }
       saved = await updateCase(snapshot.id, request);
     } else {
-      saved = await createCase(toCreateRequest(values));
+      saved = await createCase(toCreateRequest(values, diagnosisSessionId));
     }
 
     if (!saved) {

@@ -11,6 +11,7 @@ import { useCaseProgressStore } from './caseProgressStore';
 import { useCaseStore } from './caseStore';
 import { useChatStore } from './chatStore';
 import { useHospitalStore } from './hospitalStore';
+import { useDiagnosisStore } from './diagnosisStore';
 import { useMyStatsStore } from './myStatsStore';
 import { useNotificationStore } from './notificationStore';
 import { useProfileStore } from './profileStore';
@@ -34,6 +35,7 @@ function clearSessionData() {
   useCaseStore.getState().reset();
   useCaseProgressStore.getState().reset();
   useCaseDocumentStore.getState().reset();
+  useDiagnosisStore.getState().reset();
   useBenefitStore.getState().reset();
   useHospitalStore.getState().reset();
   useMyStatsStore.getState().reset();
