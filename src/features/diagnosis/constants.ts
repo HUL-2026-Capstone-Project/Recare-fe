@@ -1,6 +1,6 @@
-// 서버로 보내는 값과 질문 문구를 한곳에 모았다. 아래 항목은 백엔드 확인을 기다리는 초안이라 바꿀 일이 생기면 이 파일만 고친다.
-// - 질문 문구/보기 설명(초안), PURPOSE 고정 전송 값, "NO" 값, entryPoint "APP", answerType "CHOICE"
+// 서버로 보내는 값과 질문 문구를 한곳에 모았다. 질문 키의 의미, 값(YES/NO, INJURY_TYPE 3종), PURPOSE 고정 전송, entryPoint "APP"은 백엔드가 확인했다.
 export const DIAGNOSIS_ENTRY_POINT = 'APP';
+// 확인 대기: answerType "CHOICE"는 백엔드가 아직 확인하지 않았다.
 export const DIAGNOSIS_ANSWER_TYPE = 'CHOICE';
 
 // 화면에서 묻지 않고 항상 먼저 보내는 답변
