@@ -1,11 +1,4 @@
-import { homeMock } from '@/features/home/components/mocks';
-
 export const myMock = {
-  user: {
-    name: homeMock.user.name,
-    phone: '010-0000-0000',
-    email: 'hyungjin@recare.kr',
-  },
   accountMenu: [
     { label: '프로필 정보 수정', icon: 'user' as const },
     { label: '비밀번호 변경', icon: 'lock' as const },
@@ -13,5 +6,3 @@ export const myMock = {
   ],
   policyMenu: ['서비스 이용약관', '개인정보 처리방침', '약관 및 동의'],
 };
-
-export const APP_VERSION = 'v1.2.0';

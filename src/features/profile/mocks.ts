@@ -12,22 +12,6 @@ export type Profile = {
   isVerified: boolean;
 };
 
-// 프로필 조회 API 응답을 기준으로 한 시안 mock.
-// 마이페이지의 기존 mock(myMock.user)과 값이 다름 — 의도적으로 손대지 않음.
-export const profile: Profile = {
-  id: 1,
-  loginId: 'hyungjin92',
-  name: '황형진',
-  birthDate: '1992-03-14',
-  gender: 'M',
-  phone: '01012345678',
-  carrier: 'SKT',
-  email: 'hyungjin@recare.kr',
-  address: '인천광역시 남동구 남동대로 215, 304호',
-  language: 'KO',
-  isVerified: true,
-};
-
 export const NONE_LABEL = '미등록';
 
 export const GENDER_LABELS: Record<string, string> = { M: '남성', F: '여성' };

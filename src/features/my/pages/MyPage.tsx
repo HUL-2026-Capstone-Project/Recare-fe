@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
@@ -13,7 +14,10 @@ import { StatsRow } from '../components/StatsRow';
 import { AccountMenuCard } from '../components/AccountMenuCard';
 import { PolicyMenuCard } from '../components/PolicyMenuCard';
 import { WithdrawModal } from '../components/WithdrawModal';
-import { APP_VERSION, myMock } from '../mocks';
+import { myMock } from '../mocks';
+
+// 앱 설정(app.json/app.config)의 version. 읽지 못하면 버전 표기만 뺀다.
+const appVersion = Constants.expoConfig?.version;
 
 export default function MyPage() {
   const { top, bottom } = useSafeAreaInsets();
@@ -103,7 +107,7 @@ export default function MyPage() {
           className="text-center"
           style={{ fontSize: 11, color: colors.text3, marginTop: 4 }}
         >
-          Re:care {APP_VERSION}
+          Re:care{appVersion ? ` v${appVersion}` : ''}
         </Text>
       </ScrollView>
 

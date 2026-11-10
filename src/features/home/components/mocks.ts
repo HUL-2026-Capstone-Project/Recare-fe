@@ -1,19 +1,4 @@
 export const homeMock = {
-  user: { name: '황형진' },
-  period: {
-    startDate: '2024.01.15',
-    endDate: '2024.07.15',
-    remainingDays: 42,
-    progress: 0.7,
-  },
-  activeCase: {
-    caseNumber: '2024-0312',
-    statusLabel: '심사 중',
-    title: '요추 추간판 탈출증 산재 신청',
-    subtitle: '재해일 2024.01.15 · 자재 운반 중 허리 부상',
-    currentStep: 3,
-    totalSteps: 5,
-  },
   claims: [
     {
       id: 'absence-benefit',

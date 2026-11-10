@@ -1,4 +1,4 @@
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { create } from 'zustand';
 
@@ -30,6 +30,20 @@ type CaseDocumentState = {
 const documentSeqs: Record<number, number> = {};
 let typesSeq = 0;
 let resetGeneration = 0;
+
+// 내려받은 서류 파일은 캐시 폴더 안의 이 전용 하위 폴더에만 쓴다. 정리할 때 이 폴더만 지워 다른 캐시 파일은 건드리지 않는다.
+const DOWNLOAD_DIR_NAME = 'case-documents';
+const getDownloadDir = () => new Directory(Paths.cache, DOWNLOAD_DIR_NAME);
+
+// 삭제 실패는 무시한다(새 다운로드와 로그아웃을 막지 않는다).
+function clearDownloadedDocuments() {
+  try {
+    const dir = getDownloadDir();
+    if (dir.exists) dir.delete();
+  } catch {
+    // 정리는 최선 노력이다.
+  }
+}
 
 const bump = (caseId: number) => (documentSeqs[caseId] = (documentSeqs[caseId] ?? 0) + 1);
 
@@ -133,8 +147,12 @@ export const useCaseDocumentStore = create<CaseDocumentState>((set, get) => ({
   download: async (caseId, doc) => {
     try {
       if (!(await Sharing.isAvailableAsync())) return false;
+      // 공유 직후에는 받는 앱이 파일을 읽는 중일 수 있어 지우지 않고, 이전 다운로드 파일은 새 다운로드 직전에 지운다.
+      clearDownloadedDocuments();
       const bytes = await documentApi.downloadDocument(caseId, doc.id);
-      const file = new File(Paths.cache, downloadFileName(doc));
+      const dir = getDownloadDir();
+      dir.create({ intermediates: true, idempotent: true });
+      const file = new File(dir, downloadFileName(doc));
       if (file.exists) file.delete();
       file.create();
       file.write(bytes);
@@ -146,6 +164,7 @@ export const useCaseDocumentStore = create<CaseDocumentState>((set, get) => ({
   },
 
   reset: () => {
+    clearDownloadedDocuments();
     resetGeneration += 1;
     typesSeq += 1;
     for (const key of Object.keys(documentSeqs)) documentSeqs[Number(key)] += 1;
