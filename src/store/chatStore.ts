@@ -39,6 +39,12 @@ type ChatState = {
   sessionId: string | null;
   isStreaming: boolean;
   showQuickReplies: boolean;
+  // 홈 FAQ에서 넘어온 질문. 채팅 화면이 보일 때 한 번만 꺼내 전송한다.
+  pendingQuestion: string | null;
+  // 답변을 받는 중이면 설정하지 않는다(이동만 한다).
+  askQuestion: (question: string) => void;
+  // 대기 질문을 꺼내면서 바로 비운다.
+  takePendingQuestion: () => string | null;
   send: (question: string) => Promise<void>;
   // 실패한 답변을 같은 질문으로 다시 요청한다(질문 말풍선은 새로 만들지 않는다).
   retry: (answerId: string) => Promise<void>;
@@ -121,6 +127,18 @@ export const useChatStore = create<ChatState>((set, get) => {
     sessionId: null,
     isStreaming: false,
     showQuickReplies: true,
+    pendingQuestion: null,
+
+    askQuestion: (question) => {
+      if (get().isStreaming) return;
+      set({ pendingQuestion: question });
+    },
+
+    takePendingQuestion: () => {
+      const question = get().pendingQuestion;
+      if (question !== null) set({ pendingQuestion: null });
+      return question;
+    },
 
     send: async (question) => {
       const trimmed = question.trim();
@@ -150,7 +168,7 @@ export const useChatStore = create<ChatState>((set, get) => {
       activeController?.abort();
       activeController = null;
       const sessionId = get().sessionId;
-      set({ messages: buildInitialMessages(), sessionId: null, isStreaming: false, showQuickReplies: true });
+      set({ messages: buildInitialMessages(), sessionId: null, isStreaming: false, showQuickReplies: true, pendingQuestion: null });
       if (sessionId) {
         chatApi.deleteChatSession(sessionId).catch(() => {});
       }

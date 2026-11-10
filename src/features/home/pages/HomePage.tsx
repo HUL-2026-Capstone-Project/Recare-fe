@@ -5,6 +5,7 @@ import { router, useFocusEffect } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { useCaseStore } from '@/store/caseStore';
+import { useChatStore } from '@/store/chatStore';
 import { useMyStatsStore } from '@/store/myStatsStore';
 import { useProfileStore } from '@/store/profileStore';
 import { toHomeSubtitle, toRecoveryPeriod } from '@/features/case/caseMapper';
@@ -15,10 +16,9 @@ import { SectionHeader } from '../components/SectionHeader';
 import { CaseCard } from '../components/CaseCard';
 import { CaseEmptyCard } from '../components/CaseEmptyCard';
 import { DiagEntryCard } from '../components/DiagEntryCard';
-import { ClaimItem } from '../components/ClaimItem';
 import { FaqItem } from '../components/FaqItem';
 import { Card } from '../components/Card';
-import { homeMock } from '../components/mocks';
+import { HOME_FAQ_QUESTIONS } from '../constants';
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
@@ -48,6 +48,12 @@ export default function HomeScreen() {
       fetchStats();
     }, [fetchCases, fetchStats])
   );
+
+  // 질문을 채팅의 대기 질문으로 맡기고 채팅 탭으로 이동한다. 답변을 받는 중이면 이동만 한다.
+  const openFaq = (question: string) => {
+    useChatStore.getState().askQuestion(question);
+    router.navigate('/(tabs)/chat');
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -106,30 +112,15 @@ export default function HomeScreen() {
 
         <DiagEntryCard />
 
-        <View className="mb-6">
-          <SectionHeader title="다음 신청서를 제출할 수 있어요" />
-          <View className="gap-2">
-            {homeMock.claims.map((claim) => (
-              <ClaimItem
-                key={claim.id}
-                title={claim.title}
-                description={claim.description}
-                badgeLabel={claim.badgeLabel}
-                variant={claim.variant}
-                onPress={claim.id === 'absence-benefit' ? () => router.push('/calculator') : undefined}
-              />
-            ))}
-          </View>
-        </View>
-
         <View>
           <SectionHeader title="자주 묻는 질문들이에요" />
           <Card className="p-1">
-            {homeMock.faqs.map((faq, index) => (
+            {HOME_FAQ_QUESTIONS.map((question, index) => (
               <FaqItem
-                key={faq.id}
-                question={faq.question}
-                isLast={index === homeMock.faqs.length - 1}
+                key={question}
+                question={question}
+                isLast={index === HOME_FAQ_QUESTIONS.length - 1}
+                onPress={() => openFaq(question)}
               />
             ))}
           </Card>
