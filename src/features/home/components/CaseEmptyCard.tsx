@@ -7,7 +7,7 @@ import { Card } from './Card';
 
 export function CaseEmptyCard({ title, description }: { title: string; description: string }) {
   return (
-    <Card className="p-5 items-center" style={{ marginBottom: 14 }}>
+    <Card className="p-5 items-center">
       <EmptyStateIcon size={52} />
       <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text1, letterSpacing: -0.3, marginTop: 14 }}>{title}</Text>
       <Text

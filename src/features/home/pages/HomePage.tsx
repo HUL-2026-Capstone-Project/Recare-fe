@@ -15,6 +15,7 @@ import { PeriodCard } from '../components/PeriodCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { CaseCard } from '../components/CaseCard';
 import { CaseEmptyCard } from '../components/CaseEmptyCard';
+import { CalcEntryCard } from '../components/CalcEntryCard';
 import { DiagEntryCard } from '../components/DiagEntryCard';
 import { FaqItem } from '../components/FaqItem';
 import { Card } from '../components/Card';
@@ -75,7 +76,7 @@ export default function HomeScreen() {
         )}
 
         {activeCase && presentation && (
-          <View className="mb-6">
+          <View className="mb-2">
             <SectionHeader
               title="내 사건 대시보드"
               actionLabel="전체보기 ›"
@@ -96,7 +97,7 @@ export default function HomeScreen() {
         )}
 
         {!activeCase && listLoaded && (
-          <View className="mb-6">
+          <View className="mb-2">
             <SectionHeader
               title="내 사건 대시보드"
               actionLabel={cases.length > 0 ? '전체보기 ›' : undefined}
@@ -111,6 +112,11 @@ export default function HomeScreen() {
         )}
 
         <DiagEntryCard />
+
+        {/* 케이스 영역, 자가진단 카드, 계산기 카드 사이는 8. 계산기 카드 아래(FAQ 제목까지)는 20. */}
+        <View style={{ marginTop: 8, marginBottom: 20 }}>
+          <CalcEntryCard />
+        </View>
 
         <View>
           <SectionHeader title="자주 묻는 질문들이에요" />

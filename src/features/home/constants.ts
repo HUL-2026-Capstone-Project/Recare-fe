@@ -5,3 +5,7 @@ export const HOME_FAQ_QUESTIONS = [
   '회사가 산재 신청을 안 해주면 어떻게 하나요?',
   '산재 치료비는 제가 먼저 내야할까요?',
 ] as const;
+
+// 홈의 계산기 진입 카드 문구. 제목은 계산기 화면 제목과 같다.
+export const CALC_ENTRY_TITLE = '예상 휴업급여 보상금액';
+export const CALC_ENTRY_DESC = '받을 수 있는 휴업급여를 미리 계산해 보세요';
