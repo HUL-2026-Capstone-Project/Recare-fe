@@ -1,7 +1,7 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { colors } from '@/shared/constants/colors';
-import { ChatbotAvatar, CloseIcon } from './icons';
+import { ChatbotAvatar } from './icons';
 
 export function ChatHeader({ status }: { status: string }) {
   return (
@@ -21,11 +21,6 @@ export function ChatHeader({ status }: { status: string }) {
           </View>
         </View>
       </View>
-
-      <TouchableOpacity activeOpacity={0.7} hitSlop={8} onPress={() => {}}>
-        {/* 닫기 동작이 시안에 없어 스텁 처리 (TODO) */}
-        <CloseIcon size={22} />
-      </TouchableOpacity>
     </View>
   );
 }
