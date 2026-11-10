@@ -14,8 +14,6 @@ import { CalculationHistoryCard } from '@/features/calculator/components/Calcula
 import { digitsToDate, diffInclusiveDays } from '@/features/calculator/utils/date';
 import { buildBenefitRequest, formatWon, isBenefitRequestReady, isoDateToDigits, toHistoryItem } from '@/features/calculator/benefitMapper';
 
-const toDigits = (value: string) => value.replace(/\D/g, '');
-
 export default function CalculatorScreen() {
   const { top, bottom } = useSafeAreaInsets();
 
