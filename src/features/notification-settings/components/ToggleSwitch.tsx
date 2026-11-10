@@ -6,15 +6,18 @@ export function ToggleSwitch({
   on,
   disabled = false,
   onToggle,
+  accessibilityLabel,
 }: {
   on: boolean;
   disabled?: boolean;
   onToggle: () => void;
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
       onPress={disabled ? undefined : onToggle}
       accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: on, disabled }}
       style={{
         width: 48,
