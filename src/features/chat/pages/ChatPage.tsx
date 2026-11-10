@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { useChatStore } from '@/store/chatStore';
@@ -19,6 +20,14 @@ export default function ChatScreen() {
   const retry = useChatStore((state) => state.retry);
   const [sourceRefs, setSourceRefs] = useState<SourceRef[] | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  // 탭 화면은 마운트된 채로 남으므로 포커스될 때마다 홈 FAQ에서 넘어온 질문이 있는지 보고, 있으면 한 번만 꺼내 보낸다.
+  useFocusEffect(
+    useCallback(() => {
+      const question = useChatStore.getState().takePendingQuestion();
+      if (question) send(question);
+    }, [send])
+  );
 
   const visibleMessages = showQuickReplies ? messages : messages.filter((m) => m.type !== 'quickReplies');
 
