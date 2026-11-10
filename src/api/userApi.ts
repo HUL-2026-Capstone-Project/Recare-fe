@@ -36,8 +36,21 @@ export type TermsAgreementResponse = {
   id: number;
   termsType: string;
   termsVersion: string;
+  // 동의한 기록이면 true. 철회·미동의 이력은 false로 올 수 있다.
+  agreed: boolean;
   agreedAt: string;
 };
+
+// 스웨거 NotificationSettingsResponse(6개 모두 필수) / NotificationSettingsRequest(6개 모두 선택, 보낸 항목만 변경)
+export type NotificationSettingsResponse = {
+  pushEnabled: boolean;
+  case: boolean;
+  doc: boolean;
+  pay: boolean;
+  info: boolean;
+  marketing: boolean;
+};
+export type NotificationSettingsRequest = Partial<NotificationSettingsResponse>;
 
 export const userApi = {
   async getMyProfile(): Promise<UserResponse> {
@@ -63,6 +76,16 @@ export const userApi = {
   // 스웨거: 본문은 배열이 아니라 객체 하나, 응답은 200(본문 없음). 오류 응답은 문서화돼 있지 않다.
   async agreeToTerms(body: { termsType: TermsType; termsVersion: string }): Promise<void> {
     await apiClient.post('/api/v1/users/terms', body);
+  },
+
+  async getNotificationSettings(): Promise<NotificationSettingsResponse> {
+    const { data } = await apiClient.get<NotificationSettingsResponse>('/api/v1/users/notification-settings');
+    return data;
+  },
+
+  async updateNotificationSettings(body: NotificationSettingsRequest): Promise<NotificationSettingsResponse> {
+    const { data } = await apiClient.patch<NotificationSettingsResponse>('/api/v1/users/notification-settings', body);
+    return data;
   },
 
   async getMyStats(): Promise<MyStatsResponse> {

@@ -1,11 +1,13 @@
-import { Text, View } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/shared/constants/colors';
 
 // bottom을 주면 화면 아래에서 그 값만큼 띄우고(안전영역 별도 가산 없음), 없으면 기존처럼 안전영역 + 24다.
-export function ActionToast({ message, bottom: fixedBottom }: { message: string | null; bottom?: number }) {
+// sideMargin을 주면 토스트 최대 너비가 화면 너비에서 좌우 그 값씩 뺀 값이 되어 긴 문구는 줄바꿈된다(기본 0은 기존과 같다).
+export function ActionToast({ message, bottom: fixedBottom, sideMargin = 0 }: { message: string | null; bottom?: number; sideMargin?: number }) {
   const { bottom } = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   if (!message) return null;
 
   return (
@@ -14,7 +16,7 @@ export function ActionToast({ message, bottom: fixedBottom }: { message: string 
         className="justify-center"
         style={{
           minHeight: 44,
-          maxWidth: '100%',
+          maxWidth: sideMargin > 0 ? width - sideMargin * 2 : '100%',
           paddingHorizontal: 20,
           borderRadius: 22,
           backgroundColor: colors.text1,

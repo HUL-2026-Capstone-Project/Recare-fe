@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import type { TermsType } from '@/api/authApi';
 import { userApi } from '@/api/userApi';
+import type { TermsAgreementResponse } from '@/api/userApi';
 import { TERMS_ITEMS } from '@/features/auth/constants/terms';
 
 export type TermsLoadStatus = 'idle' | 'loading' | 'loaded' | 'error';
@@ -27,6 +28,24 @@ let resetGeneration = 0;
 
 const KNOWN_TYPES = TERMS_ITEMS.map((item) => item.termsType);
 
+// 알 수 없는 종류는 무시한다. 같은 종류가 여러 건(이력)이면 가장 최근 기록(agreedAt이 가장 늦은 것, 같으면 id가 큰 것)만 보고,
+// 그 기록의 agreed가 true일 때만 동의로 본다. 서버가 최신 1건만 주든 이력 전체를 주든 같은 결과다.
+export function pickAgreements(list: TermsAgreementResponse[]): TermsAgreements {
+  const latest: Partial<Record<TermsType, TermsAgreementResponse>> = {};
+  for (const item of list) {
+    const type = item.termsType as TermsType;
+    if (!KNOWN_TYPES.includes(type)) continue;
+    const current = latest[type];
+    if (!current || item.agreedAt > current.agreedAt || (item.agreedAt === current.agreedAt && item.id > current.id)) latest[type] = item;
+  }
+  const agreements: TermsAgreements = { ...EMPTY_AGREEMENTS };
+  for (const type of KNOWN_TYPES) {
+    const item = latest[type];
+    if (item && item.agreed === true) agreements[type] = item.agreedAt;
+  }
+  return agreements;
+}
+
 function todayLocalIso(now: Date = new Date()): string {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
@@ -45,15 +64,7 @@ export const useTermsStore = create<TermsState>((set, get) => ({
     try {
       const list = await userApi.getTermsAgreements();
       if (seq !== requestSeq) return;
-      const agreements: TermsAgreements = { ...EMPTY_AGREEMENTS };
-      for (const item of list) {
-        // 알 수 없는 종류는 무시하고, 같은 종류는 agreedAt이 가장 큰 항목을 쓴다.
-        const type = item.termsType as TermsType;
-        if (!KNOWN_TYPES.includes(type)) continue;
-        const current = agreements[type];
-        if (current === null || item.agreedAt > current) agreements[type] = item.agreedAt;
-      }
-      set({ status: 'loaded', agreements });
+      set({ status: 'loaded', agreements: pickAgreements(list) });
     } catch {
       if (seq !== requestSeq) return;
       // 받아 둔 값이 있으면 그대로 두고, 없을 때만 실패 상태로 둔다.
