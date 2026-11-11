@@ -23,8 +23,8 @@ export function ProfileHero({ name, loginId, isVerified }: { name: string; login
       </Text>
       <Text style={{ fontSize: 13, color: colors.text2, letterSpacing: -0.2, marginTop: 4 }}>@{loginId}</Text>
 
-      <View style={{ marginTop: 10 }}>
-        {isVerified ? (
+      {isVerified && (
+        <View style={{ marginTop: 10 }}>
           <View
             className="flex-row items-center"
             style={{ gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50, backgroundColor: colors.chip.greenBg }}
@@ -32,14 +32,8 @@ export function ProfileHero({ name, loginId, isVerified }: { name: string; login
             <VerifiedCheckIcon size={11} />
             <Text style={{ fontSize: 11, fontWeight: '600', color: colors.chip.greenFg }}>본인인증 완료</Text>
           </View>
-        ) : (
-          <View
-            style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50, backgroundColor: colors.chip.orangeBg }}
-          >
-            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.chip.orangeFg }}>본인인증 필요</Text>
-          </View>
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }

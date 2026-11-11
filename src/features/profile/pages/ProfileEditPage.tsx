@@ -147,20 +147,24 @@ export default function ProfileEditScreen() {
             <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/info-circle-blue.svg'))} width={16} height={16} />
           </View>
           <Text style={{ flex: 1, fontSize: 12, fontWeight: '500', color: colors.primaryDark, letterSpacing: -0.3, lineHeight: 17.4 }}>
-            본인인증으로 확인된 정보는 수정할 수 없어요
+            가입 시 입력한 정보는 수정할 수 없어요
           </Text>
         </View>
 
-        <FieldLabel>본인인증 정보</FieldLabel>
+        <FieldLabel>가입 정보</FieldLabel>
         <View style={{ backgroundColor: colors.input, borderRadius: 12, overflow: 'hidden', marginBottom: 22 }}>
           <View className="flex-row items-center justify-between" style={{ paddingTop: 10, paddingHorizontal: 14, paddingBottom: 2 }}>
-            <View
-              className="flex-row items-center"
-              style={{ gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50, backgroundColor: colors.chip.greenBg }}
-            >
-              <VerifiedCheckIcon size={11} />
-              <Text style={{ fontSize: 11, fontWeight: '600', color: colors.chip.greenFg }}>본인인증 완료</Text>
-            </View>
+            {profile.isVerified ? (
+              <View
+                className="flex-row items-center"
+                style={{ gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50, backgroundColor: colors.chip.greenBg }}
+              >
+                <VerifiedCheckIcon size={11} />
+                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.chip.greenFg }}>본인인증 완료</Text>
+              </View>
+            ) : (
+              <View />
+            )}
             <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/my-lock.svg'))} width={14} height={14} />
           </View>
           <LockedRow label="이름" value={profile.name || NONE_LABEL} showBorder />
