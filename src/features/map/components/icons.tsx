@@ -25,7 +25,7 @@ export function FilterIcon({ size = 14 }: { size?: number }) {
 export function PhoneIcon({ size = 12 }: { size?: number }) {
   return (
     <SvgUri
-      uri={svgAssetUri(require('@/shared/assets/icons-svg/phone.svg'))}
+      uri={svgAssetUri(require('@/shared/assets/icons-svg/phone-dark.svg'))}
       width={size}
       height={size}
     />
