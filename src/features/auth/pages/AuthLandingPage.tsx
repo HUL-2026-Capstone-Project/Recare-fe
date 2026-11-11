@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,12 +9,14 @@ import { useToastStore } from '@/store/toastStore';
 
 export default function SplashScreen() {
   const { top, bottom } = useSafeAreaInsets();
+  // 로그인 등이 이 화면 위에 쌓여도 이 화면은 마운트된 채라, 포커스된 동안에만 light로 둔다(아니면 흰 배경 화면에서 글씨가 흰색으로 남는다).
+  const isFocused = useIsFocused();
   // 비밀번호 변경 후 로그아웃되어 이 화면으로 올 때 보여주는 안내(기존 토스트 스토어 사용).
   const toastMessage = useToastStore((state) => state.message);
 
   return (
     <>
-      <StatusBar style="light" />
+      {isFocused && <StatusBar style="light" />}
       <LinearGradient
         colors={[colors.primaryDark, colors.primary]}
         start={{ x: 0.15, y: 0 }}

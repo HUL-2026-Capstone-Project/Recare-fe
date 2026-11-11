@@ -2,6 +2,7 @@ import '../../global.css';
 
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
@@ -47,6 +48,8 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      {/* 앱은 밝은 배경이라 상태바 글씨는 어둡게 둔다. 어두운 배경 화면(AuthLandingPage)만 포커스된 동안 light로 덮어쓴다. */}
+      <StatusBar style="dark" />
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
