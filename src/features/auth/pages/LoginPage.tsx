@@ -121,34 +121,8 @@ export default function LoginScreen() {
         )}
       </TouchableOpacity>
 
-      {/* 하단 링크: 아이디 찾기 | 비밀번호 찾기 | 회원가입 */}
+      {/* 하단 링크: 회원가입. 아이디 찾기·비밀번호 찾기는 이번 범위에서 지원하지 않아 진입점만 숨긴다(화면과 라우트는 유지). */}
       <View className="mt-5 flex-row items-center justify-center">
-        <TouchableOpacity
-          className="px-3 py-2"
-          activeOpacity={0.7}
-          onPress={() => router.push('/(auth)/find-id')}
-        >
-          <Text
-            className="text-[13px] text-text2"
-            style={{ letterSpacing: -0.3 }}
-          >
-            아이디 찾기
-          </Text>
-        </TouchableOpacity>
-
-        <View className="w-px h-3 bg-border" />
-
-        <TouchableOpacity className="px-3 py-2" activeOpacity={0.7} onPress={() => router.push('/(auth)/find-pw')}>
-          <Text
-            className="text-[13px] text-text2"
-            style={{ letterSpacing: -0.3 }}
-          >
-            비밀번호 찾기
-          </Text>
-        </TouchableOpacity>
-
-        <View className="w-px h-3 bg-border" />
-
         <TouchableOpacity
           className="px-3 py-2"
           activeOpacity={0.7}
