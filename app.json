@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Re:care",
+    "slug": "Recare-fe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/shared/assets/images/icon.png",
+    "scheme": "recarefe",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.recare.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.recare.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./src/shared/assets/images/android-icon-foreground.png",
+        "backgroundImage": "./src/shared/assets/images/android-icon-background.png",
+        "monochromeImage": "./src/shared/assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/shared/assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요",
+          "locationAlwaysAndWhenInUsePermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요",
+          "locationAlwaysPermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "서류 첨부를 위해 사진첩에 접근해요",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

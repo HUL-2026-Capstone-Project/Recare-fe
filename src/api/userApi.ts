@@ -1,0 +1,95 @@
+import type { TermsType } from './authApi';
+import { apiClient } from './client';
+
+export type UserResponse = {
+  id: number;
+  loginId: string;
+  name: string;
+  birthDate?: string | null;
+  gender?: string | null;
+  phone?: string | null;
+  carrier?: string | null;
+  email?: string | null;
+  address?: string | null;
+  language?: string | null;
+  verified?: boolean;
+};
+
+export type UserUpdateRequest = Partial<{
+  name: string;
+  gender: string;
+  language: string;
+  address: string;
+  carrier: string;
+  email: string;
+}>;
+
+// 스웨거 MyStatsResponse. 세 항목 모두 required이고 없으면 null이 아니라 0이다(서류·알림은 기능이 생기기 전까지 항상 0).
+export type MyStatsResponse = {
+  activeCaseCount: number;
+  submittedDocumentCount: number;
+  notificationCount: number;
+};
+
+// 스웨거 TermsAgreementResponse. 같은 종류가 여러 건 올 수 있어 앱은 agreedAt이 가장 큰 항목을 그 종류의 동의로 본다.
+export type TermsAgreementResponse = {
+  id: number;
+  termsType: string;
+  termsVersion: string;
+  // 동의한 기록이면 true. 철회·미동의 이력은 false로 올 수 있다.
+  agreed: boolean;
+  agreedAt: string;
+};
+
+// 스웨거 NotificationSettingsResponse(6개 모두 필수) / NotificationSettingsRequest(6개 모두 선택, 보낸 항목만 변경)
+export type NotificationSettingsResponse = {
+  pushEnabled: boolean;
+  case: boolean;
+  doc: boolean;
+  pay: boolean;
+  info: boolean;
+  marketing: boolean;
+};
+export type NotificationSettingsRequest = Partial<NotificationSettingsResponse>;
+
+export const userApi = {
+  async getMyProfile(): Promise<UserResponse> {
+    const { data } = await apiClient.get<UserResponse>('/api/v1/users/my');
+    return data;
+  },
+
+  async updateProfile(payload: UserUpdateRequest): Promise<UserResponse> {
+    const { data } = await apiClient.patch<UserResponse>('/api/v1/users/infochange', payload);
+    return data;
+  },
+
+  // 스웨거: 요청 body 없음, 응답 200(본문 없음). 문서화된 오류 응답은 없다.
+  async deleteUser(): Promise<void> {
+    await apiClient.patch('/api/v1/users/deleteuser');
+  },
+
+  async getTermsAgreements(): Promise<TermsAgreementResponse[]> {
+    const { data } = await apiClient.get<TermsAgreementResponse[]>('/api/v1/users/termscheck');
+    return data;
+  },
+
+  // 스웨거: 본문은 배열이 아니라 객체 하나, 응답은 200(본문 없음). 오류 응답은 문서화돼 있지 않다.
+  async agreeToTerms(body: { termsType: TermsType; termsVersion: string }): Promise<void> {
+    await apiClient.post('/api/v1/users/terms', body);
+  },
+
+  async getNotificationSettings(): Promise<NotificationSettingsResponse> {
+    const { data } = await apiClient.get<NotificationSettingsResponse>('/api/v1/users/notification-settings');
+    return data;
+  },
+
+  async updateNotificationSettings(body: NotificationSettingsRequest): Promise<NotificationSettingsResponse> {
+    const { data } = await apiClient.patch<NotificationSettingsResponse>('/api/v1/users/notification-settings', body);
+    return data;
+  },
+
+  async getMyStats(): Promise<MyStatsResponse> {
+    const { data } = await apiClient.get<MyStatsResponse>('/api/v1/users/my/stats');
+    return data;
+  },
+};

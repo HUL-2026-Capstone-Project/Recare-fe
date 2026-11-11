@@ -1,0 +1,519 @@
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+
+import { colors } from '@/shared/constants/colors';
+import { getErrorMessage } from '@/api/errorMessage';
+import type { ApiError } from '@/api/types';
+import { useSignupStore } from '@/store/signupStore';
+
+const CARRIERS = ['SKT', 'KT', 'LG U+', '알뜰폰'] as const;
+type Carrier = (typeof CARRIERS)[number];
+
+// 스웨거 SignUpRequest.loginId pattern — check-id에는 서버 측 형식 제약이 없어 가입 요청 기준으로 클라이언트에서 선검증한다.
+const LOGIN_ID_PATTERN = /^[a-zA-Z0-9_]{4,20}$/;
+
+type IdCheckStatus = 'default' | 'checking' | 'ok' | 'taken' | 'invalid';
+
+// 스웨거 SignUpRequest.phone pattern. 인증 단계가 없어져 이 형식을 가입 화면에서 먼저 확인한다.
+const PHONE_PATTERN = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
+
+// 앱 UI 라벨 → 서버 코드(SignUpRequest.carrier 패턴: SKT|KT|LGU|MVNO)
+const CARRIER_CODES: Record<Carrier, string> = {
+  SKT: 'SKT',
+  KT: 'KT',
+  'LG U+': 'LGU',
+  알뜰폰: 'MVNO',
+};
+
+// 주민등록번호 앞 6자리의 월/일 범위만 확인(실제 달력 검증은 아님). 스펙에서 명시한 수준으로만 검사.
+function isResidentFrontValid(front: string) {
+  if (!/^\d{6}$/.test(front)) return false;
+  const month = Number(front.slice(2, 4));
+  const day = Number(front.slice(4, 6));
+  return month >= 1 && month <= 12 && day >= 1 && day <= 31;
+}
+
+// 스웨거 SignUpRequest.residentGenderDigit pattern은 ^[0-9]$ — 범위 제한이 없어 숫자 1자리만 확인한다.
+function isResidentBackValid(back: string) {
+  return /^\d$/.test(back);
+}
+
+export default function SignUpInfoScreen() {
+  const { top } = useSafeAreaInsets();
+  const [selectedCarrier, setSelectedCarrier] = useState<Carrier>('SKT');
+
+  const [name, setName] = useState('');
+  const [userId, setUserId] = useState('');
+  const [idCheckStatus, setIdCheckStatus] = useState<IdCheckStatus>('default');
+  const [idCheckErrorMessage, setIdCheckErrorMessage] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [residentFront, setResidentFront] = useState('');
+  const [residentBack, setResidentBack] = useState('');
+  const [residentBackFocused, setResidentBackFocused] = useState(false);
+  const [showResidentError, setShowResidentError] = useState(false);
+  const residentBackRef = useRef<TextInput>(null);
+  const [phone, setPhone] = useState('');
+  const [showAlert, setShowAlert] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+
+  const isResidentValid = isResidentFrontValid(residentFront) && isResidentBackValid(residentBack);
+
+  // 회원가입 첫 화면이 언마운트되는 시점이 곧 흐름을 벗어나는 시점이다(다음 단계로 push할 때는 이 화면이 스택에 남아
+  // 있어 호출되지 않으므로 단계 이동 중 값은 유지된다). 비밀번호·주민번호 입력값 등 draft를 메모리에서 비운다.
+  useEffect(() => {
+    return () => useSignupStore.getState().reset();
+  }, []);
+
+  const handleChangeUserId = (text: string) => {
+    setUserId(text);
+    // 아이디를 수정하면 이전 중복 확인 결과는 더 이상 유효하지 않으므로 화면 상태를 초기화한다.
+    if (idCheckStatus !== 'default') setIdCheckStatus('default');
+    if (idCheckErrorMessage) setIdCheckErrorMessage(null);
+  };
+
+  const handleCheckDuplicate = async () => {
+    if (idCheckStatus === 'checking') return;
+    const trimmed = userId.trim();
+    if (!LOGIN_ID_PATTERN.test(trimmed)) {
+      setIdCheckStatus('invalid');
+      return;
+    }
+    setIdCheckErrorMessage(null);
+    setIdCheckStatus('checking');
+    try {
+      const available = await useSignupStore.getState().checkLoginIdAvailability(trimmed);
+      setIdCheckStatus(available ? 'ok' : 'taken');
+    } catch (e) {
+      setIdCheckStatus('default');
+      setIdCheckErrorMessage(getErrorMessage(e as ApiError));
+    }
+  };
+
+  const handleChangeResidentFront = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 6);
+    setResidentFront(digits);
+    if (digits.length === 6) {
+      residentBackRef.current?.focus();
+    }
+  };
+
+  const handleChangeResidentBack = (text: string) => {
+    setResidentBack(text.replace(/\D/g, '').slice(0, 1));
+  };
+
+  const handleResidentBackBlur = () => {
+    setResidentBackFocused(false);
+    if (!isResidentValid) {
+      setShowResidentError(true);
+    }
+  };
+
+  const handleNext = () => {
+    const missing: string[] = [];
+    if (!name.trim()) missing.push('이름');
+    if (!userId.trim()) {
+      missing.push('아이디');
+    } else if (idCheckStatus !== 'ok') {
+      missing.push('아이디 중복 확인');
+    }
+    if (!password.trim()) missing.push('비밀번호');
+
+    const residentComplete = residentFront.length === 6 && residentBack.length === 1;
+    if (!residentComplete) {
+      missing.push('주민등록번호');
+    } else if (!isResidentValid) {
+      setShowResidentError(true);
+      return;
+    }
+
+    if (!PHONE_PATTERN.test(phone.trim())) missing.push('휴대폰 번호');
+
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setShowAlert(true);
+      return;
+    }
+
+    useSignupStore.getState().setStep1({
+      name: name.trim(),
+      loginId: userId.trim(),
+      password,
+      residentFront,
+      residentGenderDigit: residentBack,
+      carrier: CARRIER_CODES[selectedCarrier],
+      phone: phone.trim(),
+    });
+    router.push('/(auth)/signup-address');
+  };
+
+  return (
+    <View className="flex-1 bg-white" style={{ paddingTop: top }}>
+      {/* NavBar */}
+      <View className="h-[52px] px-3 flex-row items-center justify-between">
+        <TouchableOpacity
+          className="w-10 items-center justify-center"
+          activeOpacity={0.7}
+          onPress={() => router.back()}
+        >
+          <Image
+            source={require('@/shared/assets/icons/chevron-left.png')}
+            style={{ width: 24, height: 24 }}
+          />
+        </TouchableOpacity>
+        <Text className="text-[17px] font-bold text-text1" style={{ letterSpacing: -0.3 }}>
+          회원가입
+        </Text>
+        <View className="w-10" />
+      </View>
+
+      <View className="px-5 flex-1">
+        {/* 진행 바 */}
+        <View className="flex-row gap-1.5" style={{ height: 4 }}>
+          <View className="flex-1 bg-primary rounded-full" />
+          <View className="flex-1 bg-border rounded-full" />
+        </View>
+
+        {/* 타이틀 */}
+        <View className="pt-7 pb-2">
+          <Text
+            className="text-[22px] font-extrabold text-text1"
+            style={{ letterSpacing: -0.5, lineHeight: 30 }}
+          >
+            정보를 입력해주세요
+          </Text>
+          <Text
+            className="mt-2 text-[14px] text-text2 font-medium"
+            style={{ letterSpacing: -0.3, lineHeight: 21 }}
+          >
+            정확한 정보를 입력해 주세요.
+          </Text>
+        </View>
+
+        {/* 폼 */}
+        <ScrollView className="flex-1 pt-3" showsVerticalScrollIndicator={false}>
+          <View className="gap-[7px]">
+            {/* 이름 */}
+            <TextInput
+              className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+              placeholder="이름을 입력하세요"
+              placeholderTextColor={colors.text3}
+              value={name}
+              onChangeText={setName}
+              style={{ letterSpacing: -0.3 }}
+            />
+
+            {/* 아이디 */}
+            <View>
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1" style={{ position: 'relative' }}>
+                  <TextInput
+                    className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+                    placeholder="아이디를 입력해주세요"
+                    placeholderTextColor={colors.text3}
+                    value={userId}
+                    onChangeText={handleChangeUserId}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={{
+                      letterSpacing: -0.3,
+                      paddingRight: idCheckStatus === 'ok' ? 44 : 16,
+                      borderWidth: idCheckStatus === 'taken' || idCheckStatus === 'invalid' ? 1.5 : 0,
+                      borderColor: colors.danger,
+                    }}
+                  />
+                  {idCheckStatus === 'ok' && (
+                    <View
+                      className="absolute right-3.5 top-0 bottom-0 justify-center"
+                      pointerEvents="none"
+                    >
+                      <Image
+                        source={require('@/shared/assets/icons/check-circle-success.png')}
+                        style={{ width: 18, height: 18 }}
+                      />
+                    </View>
+                  )}
+                </View>
+                <TouchableOpacity
+                  className="h-[52px] rounded-xl bg-white items-center justify-center"
+                  activeOpacity={0.85}
+                  onPress={handleCheckDuplicate}
+                  disabled={idCheckStatus === 'checking'}
+                  style={{
+                    minWidth: 92,
+                    paddingHorizontal: 16,
+                    borderWidth: 1.5,
+                    borderColor: colors.primary,
+                    opacity: idCheckStatus === 'checking' ? 0.6 : 1,
+                  }}
+                >
+                  {idCheckStatus === 'checking' ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text className="text-primary text-[14px] font-bold" style={{ letterSpacing: -0.3 }}>
+                      중복 확인
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+              {idCheckStatus === 'ok' && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.success, letterSpacing: -0.2 }}>
+                  사용 가능한 아이디예요
+                </Text>
+              )}
+              {idCheckStatus === 'taken' && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                  이미 사용 중인 아이디예요
+                </Text>
+              )}
+              {idCheckStatus === 'invalid' && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                  아이디 형식을 확인해 주세요
+                </Text>
+              )}
+              {idCheckErrorMessage && (
+                <Text className="mt-1 text-[12px] font-medium" style={{ color: colors.danger, letterSpacing: -0.2 }}>
+                  {idCheckErrorMessage}
+                </Text>
+              )}
+            </View>
+
+            {/* 비밀번호 */}
+            <TextInput
+              className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+              placeholder="비밀번호를 입력해주세요"
+              placeholderTextColor={colors.text3}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={{ letterSpacing: -0.3 }}
+            />
+
+            {/* 주민등록번호 */}
+            <View>
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1">
+                  <TextInput
+                    className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+                    placeholder="생년월일 6자리"
+                    placeholderTextColor={colors.text3}
+                    value={residentFront}
+                    onChangeText={handleChangeResidentFront}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    style={{
+                      letterSpacing: -0.3,
+                      borderWidth: showResidentError && !isResidentValid ? 1.5 : 0,
+                      borderColor: colors.danger,
+                    }}
+                  />
+                </View>
+                <Text className="text-text3 font-semibold text-[18px]">-</Text>
+                <TextInput
+                  ref={residentBackRef}
+                  className="rounded-xl text-[15px] text-text1 text-center"
+                  placeholder="0"
+                  placeholderTextColor={colors.text3}
+                  value={residentBack}
+                  onChangeText={handleChangeResidentBack}
+                  onFocus={() => setResidentBackFocused(true)}
+                  onBlur={handleResidentBackBlur}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    letterSpacing: -0.3,
+                    backgroundColor: residentBackFocused ? '#fff' : colors.input,
+                    borderWidth: residentBackFocused || (showResidentError && !isResidentValid) ? 1.5 : 0,
+                    borderColor: showResidentError && !isResidentValid ? colors.danger : colors.primary,
+                  }}
+                />
+                <View
+                  className="rounded-xl items-center justify-center"
+                  style={{ height: 52, paddingHorizontal: 14, backgroundColor: colors.input }}
+                >
+                  <Text style={{ fontSize: 10, letterSpacing: 3, color: colors.text3 }}>
+                    ●●●●●●
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={{
+                  marginTop: 8,
+                  fontSize: 12,
+                  letterSpacing: -0.2,
+                  color: showResidentError && !isResidentValid ? colors.danger : colors.text3,
+                  fontWeight: showResidentError && !isResidentValid ? '500' : '400',
+                }}
+              >
+                {showResidentError && !isResidentValid
+                  ? '주민등록번호를 확인해 주세요'
+                  : '성별 확인을 위해 뒤 첫 자리만 입력해요. 나머지 번호는 받지 않아요.'}
+              </Text>
+            </View>
+
+            {/* 휴대폰 번호 */}
+            <View className="mt-1">
+              <Text
+                className="text-[12px] font-semibold text-text2 mb-1.5"
+                style={{ letterSpacing: -0.2 }}
+              >
+                휴대폰 번호
+              </Text>
+
+              {/* 통신사 칩 */}
+              <View className="flex-row gap-1.5 mb-2">
+                {CARRIERS.map(carrier => (
+                  <TouchableOpacity
+                    key={carrier}
+                    onPress={() => setSelectedCarrier(carrier)}
+                    activeOpacity={0.7}
+                    className="px-2 py-1 rounded-full"
+                    style={{
+                      backgroundColor:
+                        carrier === selectedCarrier ? colors.primaryLight : colors.input,
+                    }}
+                  >
+                    <Text
+                      className="text-[11px] font-semibold"
+                      style={{
+                        letterSpacing: -0.2,
+                        color: carrier === selectedCarrier ? colors.primary : colors.text2,
+                      }}
+                    >
+                      {carrier}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TextInput
+                className="h-[52px] bg-input rounded-xl px-4 text-[15px] text-text1"
+                placeholder="010 - 0000 - 0000"
+                placeholderTextColor={colors.text3}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                style={{ letterSpacing: -0.3 }}
+              />
+            </View>
+
+            {/* 안내 박스 */}
+            <View
+              className="rounded-[10px] p-3 flex-row gap-2 items-start mb-4"
+              style={{ backgroundColor: colors.primaryLight, marginTop: 4 }}
+            >
+              <Image
+                source={require('@/shared/assets/icons/info-circle.png')}
+                style={{ width: 14, height: 14, marginTop: 1, tintColor: colors.primary }}
+              />
+              <Text
+                className="flex-1 text-[11px] font-medium"
+                style={{ color: colors.primaryDark, letterSpacing: -0.2, lineHeight: 16 }}
+              >
+                입력하신 정보는 서비스 이용을 위해서만 사용됩니다.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* 다음 버튼 */}
+        <View className="pb-4">
+          <TouchableOpacity
+            className="h-[52px] w-full bg-primary rounded-xl items-center justify-center"
+            activeOpacity={0.85}
+            onPress={handleNext}
+          >
+            <Text
+              className="text-white text-base font-bold"
+              style={{ letterSpacing: -0.3 }}
+            >
+              다음
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 유효성 검사 모달 */}
+      <Modal visible={showAlert} transparent animationType="fade">
+        <View
+          className="flex-1 items-center justify-center px-6"
+          style={{ backgroundColor: 'rgba(17,24,32,0.55)' }}
+        >
+          <View className="w-full bg-white rounded-[18px] px-5 pt-6 pb-4" style={{ shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 20, shadowOffset: { width: 0, height: 8 } }}>
+            {/* 경고 아이콘 */}
+            <View
+              className="w-12 h-12 rounded-full items-center justify-center self-center mb-3.5"
+              style={{ backgroundColor: '#FFF1E5' }}
+            >
+              <Image
+                source={require('@/shared/assets/icons/alert-warning.png')}
+                style={{ width: 24, height: 24 }}
+              />
+            </View>
+
+            {/* 제목 */}
+            <Text
+              className="text-center text-[17px] font-extrabold text-text1"
+              style={{ letterSpacing: -0.4, lineHeight: 23 }}
+            >
+              입력 정보를 확인해주세요
+            </Text>
+
+            {/* 부제 */}
+            <Text
+              className="text-center text-[13px] text-text2 font-medium mt-2"
+              style={{ letterSpacing: -0.3, lineHeight: 20 }}
+            >
+              모든 항목을 입력해야 다음 단계로 넘어갈 수 있어요.
+            </Text>
+
+            {/* 누락 항목 목록 */}
+            <View className="mt-4 rounded-xl p-3" style={{ backgroundColor: colors.input }}>
+              <Text
+                className="text-[11px] font-bold text-text2 mb-1.5"
+                style={{ letterSpacing: -0.2 }}
+              >
+                누락된 항목
+              </Text>
+              <View className="gap-1.5">
+                {missingFields.map(field => (
+                  <View key={field} className="flex-row items-center gap-1.5">
+                    <Image
+                      source={require('@/shared/assets/icons/x-circle.png')}
+                      style={{ width: 12, height: 12 }}
+                    />
+                    <Text
+                      className="text-[13px] font-semibold text-text1"
+                      style={{ letterSpacing: -0.2 }}
+                    >
+                      {field}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* 확인 버튼 */}
+            <TouchableOpacity
+              className="h-12 w-full bg-primary rounded-xl items-center justify-center mt-4"
+              activeOpacity={0.85}
+              onPress={() => setShowAlert(false)}
+            >
+              <Text
+                className="text-white text-[15px] font-bold"
+                style={{ letterSpacing: -0.3 }}
+              >
+                확인
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}

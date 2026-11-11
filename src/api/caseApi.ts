@@ -1,0 +1,230 @@
+import { apiClient } from './client';
+
+// 스웨거 기준. required 표시가 있는 응답 필드는 항상 값이 있고, 없는 필드만 null일 수 있다.
+export type CaseStatus =
+  | 'DRAFT'
+  | 'PREPARING'
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'IN_TREATMENT'
+  | 'CLOSED';
+
+export type AccidentType = 'ACCIDENT' | 'DISEASE' | 'COMMUTE';
+
+// 서버가 정한 진행 단계 표시. group은 CLOSED만 종결, 나머지는 진행 중(ACTIVE).
+export type CaseProgress = {
+  statusLabel: string;
+  stage: number;
+  stageLabel: string;
+  totalStages: number;
+  group: 'ACTIVE' | 'CLOSED';
+};
+
+export type CaseSummaryResponse = {
+  id: number;
+  title: string;
+  caseNumber?: string | null;
+  accidentType: AccidentType;
+  accidentTypeLabel: string;
+  accidentDate: string;
+  status: CaseStatus;
+  progress: CaseProgress;
+  hasWorkStop: boolean;
+  treatmentStartDate?: string | null;
+  treatmentEndDate?: string | null;
+  // 사고 경위 앞 60자(넘치면 끝에 '…'), 경위가 없으면 null
+  summary?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CaseResponse = {
+  id: number;
+  title: string;
+  caseNumber?: string | null;
+  accidentType: AccidentType;
+  accidentTypeLabel: string;
+  accidentDetail?: string | null;
+  accidentDate: string;
+  incidentPlace?: string | null;
+  jobType?: string | null;
+  status: CaseStatus;
+  progress: CaseProgress;
+  treatmentStartDate?: string | null;
+  treatmentEndDate?: string | null;
+  hasWorkStop: boolean;
+  description?: string | null;
+  diagnosisName?: string | null;
+  injuredBodyPart?: string | null;
+  diagnosisDate?: string | null;
+  diagnosisHospitalName?: string | null;
+  diagnosisSessionId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// 스웨거 TimelineResponse / TodoResponse. 필수가 아닌 필드만 null일 수 있다.
+export type TimelineStepType =
+  | 'DIAGNOSIS'
+  | 'DOCUMENT_PREP'
+  | 'APPLICATION'
+  | 'REVIEW'
+  | 'DECISION'
+  | 'TREATMENT'
+  | 'BENEFIT'
+  | 'CLOSED'
+  | 'ETC';
+export type TimelineStepStatus = 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'SKIPPED';
+
+export type TimelineResponse = {
+  id: number;
+  stepType: TimelineStepType;
+  stepStatus: TimelineStepStatus;
+  title: string;
+  description?: string | null;
+  eventDate?: string | null;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type TodoPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type TodoStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+
+export type TodoResponse = {
+  id: number;
+  title: string;
+  description?: string | null;
+  priority: TodoPriority;
+  dueDate?: string | null;
+  status: TodoStatus;
+  linkedDocumentId?: number | null;
+  linkedTimelineId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// 스웨거 CreateTimelineRequest / UpdateTimelineRequest (title 100자, description 255자). 수정은 보낸 항목만 바뀐다.
+export type CreateTimelineRequest = {
+  stepType: TimelineStepType;
+  title: string;
+  stepStatus?: TimelineStepStatus;
+  description?: string;
+  eventDate?: string;
+  sortOrder?: number;
+};
+export type UpdateTimelineRequest = Partial<Omit<CreateTimelineRequest, 'sortOrder'>>;
+
+// 스웨거 CreateTodoRequest / UpdateTodoRequest (title 150자, description 255자).
+export type CreateTodoRequest = { title: string; description?: string; priority?: TodoPriority; dueDate?: string };
+export type UpdateTodoRequest = Partial<CreateTodoRequest & { status: TodoStatus }>;
+
+// 스웨거 CreateCaseRequest. 필수는 title, accidentType, accidentDate이고 hasWorkStop을 보내지 않으면 서버가 false로 본다.
+export type CreateCaseRequest = {
+  title: string;
+  accidentType: AccidentType;
+  accidentDate: string;
+  incidentPlace?: string;
+  jobType?: string;
+  accidentDetail?: string;
+  diagnosisName?: string;
+  injuredBodyPart?: string;
+  diagnosisDate?: string;
+  diagnosisHospitalName?: string;
+  treatmentStartDate?: string;
+  treatmentEndDate?: string;
+  hasWorkStop?: boolean;
+  description?: string;
+  diagnosisSessionId?: number;
+};
+
+// 스웨거 UpdateCaseRequest. 보낸 항목만 바뀐다. 글자 필드는 ""를 보내야 지워지고(null은 변경 없음), 날짜는 지울 수 없다.
+export type UpdateCaseRequest = Partial<{
+  title: string;
+  accidentType: AccidentType;
+  accidentDate: string;
+  incidentPlace: string;
+  jobType: string;
+  accidentDetail: string;
+  diagnosisName: string;
+  injuredBodyPart: string;
+  diagnosisDate: string;
+  diagnosisHospitalName: string;
+  caseNumber: string;
+  treatmentStartDate: string;
+  treatmentEndDate: string;
+  hasWorkStop: boolean;
+  description: string;
+}>;
+
+export const caseApi = {
+  // 목록은 페이지네이션 없이 전부 내려온다(스웨거). status/group/sort 쿼리는 쓰지 않고 앱에서 progress.group으로 나눈다.
+  async getCases(): Promise<CaseSummaryResponse[]> {
+    const { data } = await apiClient.get<CaseSummaryResponse[]>('/api/v1/cases');
+    return data;
+  },
+
+  async getCase(id: number): Promise<CaseResponse> {
+    const { data } = await apiClient.get<CaseResponse>(`/api/v1/cases/${id}`);
+    return data;
+  },
+
+  // 서버가 sortOrder 순으로 준다. 앱은 정렬하지 않는다.
+  async getTimeline(caseId: number): Promise<TimelineResponse[]> {
+    const { data } = await apiClient.get<TimelineResponse[]>(`/api/v1/cases/${caseId}/timeline`);
+    return data;
+  },
+
+  // 서버가 상태·우선순위·마감일 순으로 준다. status 쿼리는 쓰지 않는다.
+  async getTodos(caseId: number): Promise<TodoResponse[]> {
+    const { data } = await apiClient.get<TodoResponse[]>(`/api/v1/cases/${caseId}/todos`);
+    return data;
+  },
+
+  async changeTodoStatus(caseId: number, todoId: number, status: TodoStatus): Promise<TodoResponse> {
+    const { data } = await apiClient.patch<TodoResponse>(`/api/v1/cases/${caseId}/todos/${todoId}/status`, { status });
+    return data;
+  },
+
+  async createTimeline(caseId: number, body: CreateTimelineRequest): Promise<TimelineResponse> {
+    const { data } = await apiClient.post<TimelineResponse>(`/api/v1/cases/${caseId}/timeline`, body);
+    return data;
+  },
+
+  async updateTimeline(caseId: number, timelineId: number, body: UpdateTimelineRequest): Promise<TimelineResponse> {
+    const { data } = await apiClient.patch<TimelineResponse>(`/api/v1/cases/${caseId}/timeline/${timelineId}`, body);
+    return data;
+  },
+
+  async createTodo(caseId: number, body: CreateTodoRequest): Promise<TodoResponse> {
+    const { data } = await apiClient.post<TodoResponse>(`/api/v1/cases/${caseId}/todos`, body);
+    return data;
+  },
+
+  async updateTodo(caseId: number, todoId: number, body: UpdateTodoRequest): Promise<TodoResponse> {
+    const { data } = await apiClient.patch<TodoResponse>(`/api/v1/cases/${caseId}/todos/${todoId}`, body);
+    return data;
+  },
+
+  async deleteTodo(caseId: number, todoId: number): Promise<void> {
+    await apiClient.delete(`/api/v1/cases/${caseId}/todos/${todoId}`);
+  },
+
+  // 상태는 어디에서 어디로든 바뀐다. 응답의 progress가 새 단계 표시다.
+  async changeCaseStatus(caseId: number, status: CaseStatus): Promise<CaseResponse> {
+    const { data } = await apiClient.patch<CaseResponse>(`/api/v1/cases/${caseId}/status`, { status });
+    return data;
+  },
+
+  async createCase(body: CreateCaseRequest): Promise<CaseResponse> {
+    const { data } = await apiClient.post<CaseResponse>('/api/v1/cases', body);
+    return data;
+  },
+
+  // PATCH는 보내지 않은 필드를 그대로 유지한다(백엔드 답변).
+  async updateCase(id: number, body: UpdateCaseRequest): Promise<CaseResponse> {
+    const { data } = await apiClient.patch<CaseResponse>(`/api/v1/cases/${id}`, body);
+    return data;
+  },
+};
