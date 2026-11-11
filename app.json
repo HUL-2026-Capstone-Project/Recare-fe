@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Recare-fe",
+    "name": "Re:care",
     "slug": "Recare-fe",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,10 +9,12 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.recare.app"
+      "bundleIdentifier": "com.recare.app",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.recare.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./src/shared/assets/images/android-icon-foreground.png",
@@ -36,7 +38,9 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요"
+          "locationWhenInUsePermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요",
+          "locationAlwaysAndWhenInUsePermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요",
+          "locationAlwaysPermission": "주변 산재 지정 병원을 찾기 위해 위치 정보가 필요해요"
         }
       ],
       [
