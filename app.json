@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./src/shared/assets/images/icon.png",
     "scheme": "recarefe",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.recare.app"
