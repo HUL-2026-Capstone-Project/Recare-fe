@@ -3,12 +3,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { extraBottomInset } from '@/shared/lib/bottomInset';
 import { TERMS_ITEMS } from '@/features/auth/constants/terms';
 import { getTermsBody } from '@/features/auth/constants/termsContent';
 import { useSignupStore } from '@/store/signupStore';
 
 export default function SignupTermsDetailScreen() {
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const { index } = useLocalSearchParams<{ index: string }>();
   const itemIndex = Number(index);
   const item = TERMS_ITEMS[itemIndex];
@@ -69,7 +70,7 @@ export default function SignupTermsDetailScreen() {
 
       <View
         className="bg-white"
-        style={{ paddingTop: 12, paddingHorizontal: 20, paddingBottom: 16, borderTopWidth: 1, borderTopColor: colors.border }}
+        style={{ paddingTop: 12, paddingHorizontal: 20, paddingBottom: 16 + extraBottomInset(bottom), borderTopWidth: 1, borderTopColor: colors.border }}
       >
         <TouchableOpacity
           className="h-[52px] w-full bg-primary rounded-xl items-center justify-center"
