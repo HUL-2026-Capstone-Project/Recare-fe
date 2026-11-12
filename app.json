@@ -4,7 +4,7 @@
     "slug": "Recare-fe",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/shared/assets/images/icon.png",
+    "icon": "./src/shared/assets/images/icon-recare.png",
     "scheme": "recarefe",
     "userInterfaceStyle": "light",
     "ios": {
@@ -16,10 +16,8 @@
       "package": "com.recare.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/shared/assets/images/android-icon-foreground.png",
-        "backgroundImage": "./src/shared/assets/images/android-icon-background.png",
-        "monochromeImage": "./src/shared/assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#E2EDFB",
+        "foregroundImage": "./src/shared/assets/images/android-icon-recare-foreground.png"
       },
       "predictiveBackGestureEnabled": false
     },
