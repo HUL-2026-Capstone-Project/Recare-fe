@@ -1,16 +1,22 @@
-import { SvgUri } from 'react-native-svg';
+import type { FC } from 'react';
+import type { SvgProps } from 'react-native-svg';
 
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import NotiBriefcaseSvg from '@/shared/assets/icons-svg/noti-briefcase.svg';
+import NotiCheckSvg from '@/shared/assets/icons-svg/noti-check.svg';
+import NotiDocSvg from '@/shared/assets/icons-svg/noti-doc.svg';
+import NotiInfoSvg from '@/shared/assets/icons-svg/noti-info.svg';
+import NotiMoneySvg from '@/shared/assets/icons-svg/noti-money.svg';
 import type { NotificationIcon } from '../types';
 
-const NOTIFICATION_ICON_FILES: Record<NotificationIcon, number> = {
-  money: require('@/shared/assets/icons-svg/noti-money.svg'),
-  doc: require('@/shared/assets/icons-svg/noti-doc.svg'),
-  check: require('@/shared/assets/icons-svg/noti-check.svg'),
-  case: require('@/shared/assets/icons-svg/noti-briefcase.svg'),
-  info: require('@/shared/assets/icons-svg/noti-info.svg'),
+const NOTIFICATION_ICONS: Record<NotificationIcon, FC<SvgProps>> = {
+  money: NotiMoneySvg,
+  doc: NotiDocSvg,
+  check: NotiCheckSvg,
+  case: NotiBriefcaseSvg,
+  info: NotiInfoSvg,
 };
 
 export function NotificationTypeIcon({ icon, size = 18 }: { icon: NotificationIcon; size?: number }) {
-  return <SvgUri uri={svgAssetUri(NOTIFICATION_ICON_FILES[icon])} width={size} height={size} />;
+  const Icon = NOTIFICATION_ICONS[icon];
+  return <Icon width={size} height={size} />;
 }
