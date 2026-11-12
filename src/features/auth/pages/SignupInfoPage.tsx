@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { extraBottomInset } from '@/shared/lib/bottomInset';
 import { getErrorMessage } from '@/api/errorMessage';
 import type { ApiError } from '@/api/types';
 import { useSignupStore } from '@/store/signupStore';
@@ -41,7 +42,7 @@ function isResidentBackValid(back: string) {
 }
 
 export default function SignUpInfoScreen() {
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const [selectedCarrier, setSelectedCarrier] = useState<Carrier>('SKT');
 
   const [name, setName] = useState('');
@@ -422,7 +423,7 @@ export default function SignUpInfoScreen() {
         </ScrollView>
 
         {/* 다음 버튼 */}
-        <View className="pb-4">
+        <View style={{ paddingBottom: 16 + extraBottomInset(bottom) }}>
           <TouchableOpacity
             className="h-[52px] w-full bg-primary rounded-xl items-center justify-center"
             activeOpacity={0.85}

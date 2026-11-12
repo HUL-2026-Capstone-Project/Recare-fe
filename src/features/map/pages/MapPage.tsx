@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -8,7 +8,7 @@ import { colors } from '@/shared/constants/colors';
 import { useHospitalStore } from '@/store/hospitalStore';
 import { MapBackground } from '../components/MapBackground';
 import { MapSearchBar } from '../components/MapSearchBar';
-import { MapFilterChips } from '../components/MapFilterChips';
+import { MAP_TOP_OVERLAY_HEIGHT, MapFilterChips } from '../components/MapFilterChips';
 import { MapBottomSheet } from '../components/MapBottomSheet';
 import { HospitalDetailSheet } from '../components/HospitalDetailSheet';
 import { toSearchFilter } from '../filters';
@@ -16,6 +16,8 @@ import { useCurrentLocation } from '../utils/useCurrentLocation';
 
 const SEARCH_RADIUS_KM = 5;
 const SEARCH_DEBOUNCE_MS = 400;
+// Android는 prop이 사라져도 패딩을 되돌리지 않으므로 닫힌 상태도 0 값을 명시해서 전달한다.
+const NO_MAP_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
 
 export default function MapPage() {
   const { top } = useSafeAreaInsets();
@@ -29,6 +31,10 @@ export default function MapPage() {
   const loadMoreHospitals = useHospitalStore((state) => state.loadMoreHospitals);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [keyword, setKeyword] = useState('');
+  // 상세 시트의 측정 높이(어느 병원의 시트인지와 함께 저장). 선택이 바뀌면 시트가 새로 마운트되어 다시 측정된다.
+  const [detailLayout, setDetailLayout] = useState<{ id: number; height: number } | null>(null);
+  // 마커·목록 어느 쪽이든 병원을 누를 때마다 올려서, 같은 병원을 다시 눌러도 카메라가 다시 이동하게 한다.
+  const [focusRequest, setFocusRequest] = useState(0);
   const mapRef = useRef<NaverMapViewRef>(null);
   const location = useCurrentLocation();
 
@@ -69,18 +75,25 @@ export default function MapPage() {
   const selectedHospital = hospitals.find((h) => h.id === selectedId);
   const showEmptyNotice = selectedFilters.length > 0 && status === 'success' && hospitals.length === 0;
 
-  const handleSelectCard = (id: number) => {
+  const selectHospital = (id: number) => {
     setSelectedId(id);
-    const hospital = hospitals.find((h) => h.id === id);
-    if (hospital) {
-      mapRef.current?.animateCameraTo({
-        latitude: hospital.latitude,
-        longitude: hospital.longitude,
-        duration: 400,
-        easing: 'EaseOut',
-      });
-    }
+    setFocusRequest((count) => count + 1);
   };
+
+  // 상세 시트가 떠 있고 높이를 측정한 동안에만 지도 위·아래를 그만큼 덮인 영역으로 알린다. 닫으면 0으로 되돌린다(카메라는 되돌리지 않는다).
+  const detailHeight = selectedHospital && detailLayout?.id === selectedHospital.id ? detailLayout.height : null;
+  const mapPadding = useMemo(
+    () => (detailHeight === null ? NO_MAP_PADDING : { top: MAP_TOP_OVERLAY_HEIGHT, bottom: detailHeight, left: 0, right: 0 }),
+    [detailHeight]
+  );
+
+  const selectedLatitude = selectedHospital?.latitude;
+  const selectedLongitude = selectedHospital?.longitude;
+  // 선택 병원으로 카메라를 옮긴다(줌은 그대로). 패딩이 반영된 뒤 이동해야 보이는 영역의 중앙에 온다.
+  useEffect(() => {
+    if (focusRequest === 0 || detailHeight === null || selectedLatitude === undefined || selectedLongitude === undefined) return;
+    mapRef.current?.animateCameraTo({ latitude: selectedLatitude, longitude: selectedLongitude, duration: 400, easing: 'EaseOut' });
+  }, [focusRequest, detailHeight, selectedLatitude, selectedLongitude]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg, paddingTop: top }}>
@@ -90,7 +103,8 @@ export default function MapPage() {
           center={location.isResolved ? { latitude: location.latitude, longitude: location.longitude } : null}
           hospitals={hospitals}
           selectedId={selectedId}
-          onSelectPin={setSelectedId}
+          mapPadding={mapPadding}
+          onSelectPin={selectHospital}
         />
 
         <MapSearchBar value={keyword} onChangeText={setKeyword} />
@@ -117,18 +131,23 @@ export default function MapPage() {
             </View>
           )}
           {selectedHospital ? (
-            <HospitalDetailSheet
-              hospital={selectedHospital}
-              origin={location.isResolved ? { latitude: location.latitude, longitude: location.longitude } : null}
-              onClose={() => setSelectedId(null)}
-            />
+            <View
+              key={selectedHospital.id}
+              onLayout={(event) => setDetailLayout({ id: selectedHospital.id, height: event.nativeEvent.layout.height })}
+            >
+              <HospitalDetailSheet
+                hospital={selectedHospital}
+                origin={location.isResolved ? { latitude: location.latitude, longitude: location.longitude } : null}
+                onClose={() => setSelectedId(null)}
+              />
+            </View>
           ) : (
             <MapBottomSheet
               hospitals={hospitals}
               radius={`${SEARCH_RADIUS_KM}km`}
               total={total}
               selectedId={selectedId}
-              onSelectCard={handleSelectCard}
+              onSelectCard={selectHospital}
               onEndReached={loadMoreHospitals}
             />
           )}
