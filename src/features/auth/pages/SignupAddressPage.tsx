@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
+import { extraBottomInset } from '@/shared/lib/bottomInset';
 import { getErrorMessage } from '@/api/errorMessage';
 import type { ApiError } from '@/api/types';
 import { useAuthStore } from '@/store/authStore';
@@ -22,7 +23,7 @@ function TermsCheckCircle({ checked, size }: { checked: boolean; size: number })
 }
 
 export default function SignUpAddressScreen() {
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const termsAgree = useSignupStore((state) => state.termsAgree);
   const setTermsAgree = useSignupStore((state) => state.setTermsAgree);
 
@@ -217,7 +218,7 @@ export default function SignUpAddressScreen() {
         </ScrollView>
 
         {/* 가입 완료 버튼 */}
-        <View className="pb-4">
+        <View style={{ paddingBottom: 16 + extraBottomInset(bottom) }}>
           {errorMessage ? (
             <View
               className="rounded-xl mb-2 px-3 py-2.5"
