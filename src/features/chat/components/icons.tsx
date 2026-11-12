@@ -1,43 +1,20 @@
-import { SvgUri } from 'react-native-svg';
-
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import LogoRecareMascotSvg from '@/shared/assets/icons-svg/logo-recare-mascot.svg';
+import CloseSvg from '@/shared/assets/icons-svg/close.svg';
+import PlusGraySvg from '@/shared/assets/icons-svg/plus-gray.svg';
+import SendWhiteSvg from '@/shared/assets/icons-svg/send-white.svg';
 
 export function ChatbotAvatar({ size }: { size: number }) {
-  return (
-    <SvgUri
-      uri={svgAssetUri(require('@/shared/assets/icons-svg/logo-recare-mascot.svg'))}
-      width={size}
-      height={size}
-    />
-  );
+  return <LogoRecareMascotSvg width={size} height={size} />;
 }
 
 export function CloseIcon({ size = 22 }: { size?: number }) {
-  return (
-    <SvgUri
-      uri={svgAssetUri(require('@/shared/assets/icons-svg/close.svg'))}
-      width={size}
-      height={size}
-    />
-  );
+  return <CloseSvg width={size} height={size} />;
 }
 
 export function PlusIcon({ size = 18 }: { size?: number }) {
-  return (
-    <SvgUri
-      uri={svgAssetUri(require('@/shared/assets/icons-svg/plus-gray.svg'))}
-      width={size}
-      height={size}
-    />
-  );
+  return <PlusGraySvg width={size} height={size} />;
 }
 
 export function SendButtonIcon({ size = 18 }: { size?: number }) {
-  return (
-    <SvgUri
-      uri={svgAssetUri(require('@/shared/assets/icons-svg/send-white.svg'))}
-      width={size}
-      height={size}
-    />
-  );
+  return <SendWhiteSvg width={size} height={size} />;
 }
