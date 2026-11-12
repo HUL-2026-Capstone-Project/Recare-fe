@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SvgUri } from 'react-native-svg';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 
 import type { CaseResponse } from '@/api/caseApi';
 import { colors } from '@/shared/constants/colors';
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import CloseSvg from '@/shared/assets/icons-svg/close.svg';
 import { ToggleSwitch } from '@/features/notification-settings/components/ToggleSwitch';
 import { useCaseStore } from '@/store/caseStore';
 import { CaseDetailHeader } from '../components/CaseDetailHeader';
@@ -217,7 +216,7 @@ function CaseForm({ original, diagnosisSessionId }: { original: CaseResponse | n
             {CASE_FORM_MESSAGES.saveFailed}
           </Text>
           <TouchableOpacity activeOpacity={0.7} hitSlop={8} onPress={() => setSaveFailed(false)}>
-            <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/close.svg'))} width={14} height={14} />
+            <CloseSvg width={14} height={14} />
           </TouchableOpacity>
         </View>
       )}

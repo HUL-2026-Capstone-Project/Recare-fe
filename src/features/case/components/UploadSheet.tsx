@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { File } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { SvgUri } from 'react-native-svg';
 
 import type { DocumentTypeResponse } from '@/api/documentApi';
 import { colors } from '@/shared/constants/colors';
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import CheckBlueSvg from '@/shared/assets/icons-svg/check-blue.svg';
 import { useCaseDocumentStore } from '@/store/caseDocumentStore';
 import { ALLOWED_UPLOAD_TYPES, DOC_MESSAGES, MAX_UPLOAD_BYTES, ensureExtension, guessMimeFromName } from '../documentFormat';
 import { BtnOutline } from './DocButtons';
@@ -113,7 +112,7 @@ export function UploadSheet({ caseId, types, onClose, onToast }: Props) {
                 <Text style={{ fontSize: 12, fontWeight: '500', color: colors.text2, marginTop: 2, letterSpacing: -0.2 }}>{type.simpleDescription}</Text>
               )}
             </View>
-            {on && <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/check-blue.svg'))} width={20} height={20} />}
+            {on && <CheckBlueSvg width={20} height={20} />}
           </Pressable>
         );
       })}

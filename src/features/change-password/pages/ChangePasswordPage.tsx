@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SvgUri } from 'react-native-svg';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
 import { authApi } from '@/api/authApi';
 import type { ApiError } from '@/api/types';
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import CheckGrayXsSvg from '@/shared/assets/icons-svg/check-gray-xs.svg';
+import CheckGreenXsSvg from '@/shared/assets/icons-svg/check-green-xs.svg';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { useAuthStore } from '@/store/authStore';
 import { useToastStore } from '@/store/toastStore';
@@ -22,18 +22,11 @@ type RuleTone = 'muted' | 'success' | 'danger';
 
 function PwRuleHint({ tone }: { tone: RuleTone }) {
   const color = tone === 'success' ? colors.success : tone === 'danger' ? colors.danger : colors.text3;
+  const RuleCheckIcon = tone === 'success' ? CheckGreenXsSvg : CheckGrayXsSvg;
   return (
     <View className="flex-row items-center gap-1.5 mt-2">
       {tone !== 'danger' && (
-        <SvgUri
-          uri={svgAssetUri(
-            tone === 'success'
-              ? require('@/shared/assets/icons-svg/check-green-xs.svg')
-              : require('@/shared/assets/icons-svg/check-gray-xs.svg')
-          )}
-          width={10}
-          height={10}
-        />
+        <RuleCheckIcon width={10} height={10} />
       )}
       <Text style={{ fontSize: 12, color, fontWeight: tone === 'muted' ? '400' : '500', letterSpacing: -0.2 }}>
         영문, 숫자, 특수문자를 조합해 8자 이상

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SvgUri } from 'react-native-svg';
 import { router } from 'expo-router';
 
 import { colors } from '@/shared/constants/colors';
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import CloseSvg from '@/shared/assets/icons-svg/close.svg';
+import InfoCircleBlueSvg from '@/shared/assets/icons-svg/info-circle-blue.svg';
+import MyLockSvg from '@/shared/assets/icons-svg/my-lock.svg';
 import { CaseDetailHeader } from '@/features/case/components/CaseDetailHeader';
 import { useProfileStore } from '@/store/profileStore';
 import type { UserUpdateRequest } from '@/api/userApi';
@@ -144,7 +145,7 @@ export default function ProfileEditScreen() {
           style={{ backgroundColor: colors.primaryLight, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, gap: 8, marginBottom: 20 }}
         >
           <View style={{ flexShrink: 0 }}>
-            <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/info-circle-blue.svg'))} width={16} height={16} />
+            <InfoCircleBlueSvg width={16} height={16} />
           </View>
           <Text style={{ flex: 1, fontSize: 12, fontWeight: '500', color: colors.primaryDark, letterSpacing: -0.3, lineHeight: 17.4 }}>
             가입 시 입력한 정보는 수정할 수 없어요
@@ -165,7 +166,7 @@ export default function ProfileEditScreen() {
             ) : (
               <View />
             )}
-            <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/my-lock.svg'))} width={14} height={14} />
+            <MyLockSvg width={14} height={14} />
           </View>
           <LockedRow label="이름" value={profile.name || NONE_LABEL} showBorder />
           <LockedRow label="생년월일 · 성별" value={formatBirthGender(profile.birthDate, profile.gender)} showBorder />
@@ -176,7 +177,7 @@ export default function ProfileEditScreen() {
           <FieldLabel>아이디</FieldLabel>
           <View className="flex-row items-center" style={{ height: 52, borderRadius: 12, backgroundColor: colors.input, paddingHorizontal: 16, gap: 10 }}>
             <Text style={{ flex: 1, fontSize: 15, fontWeight: '500', color: colors.text2, letterSpacing: -0.3 }}>{profile.loginId}</Text>
-            <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/my-lock.svg'))} width={14} height={14} />
+            <MyLockSvg width={14} height={14} />
           </View>
         </View>
 
@@ -212,7 +213,7 @@ export default function ProfileEditScreen() {
                 onPress={() => setEmail('')}
                 style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.text3, alignItems: 'center', justifyContent: 'center' }}
               >
-                <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/close.svg'))} width={8} height={8} />
+                <CloseSvg width={8} height={8} />
               </TouchableOpacity>
             )}
           </View>

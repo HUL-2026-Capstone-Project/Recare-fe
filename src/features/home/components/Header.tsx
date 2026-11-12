@@ -1,8 +1,7 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
-import { SvgUri } from 'react-native-svg';
 
-import { svgAssetUri } from '@/shared/lib/svgAsset';
+import BellSvg from '@/shared/assets/icons-svg/bell.svg';
 
 export function Header({ hasUnread }: { hasUnread: boolean }) {
   return (
@@ -19,7 +18,7 @@ export function Header({ hasUnread }: { hasUnread: boolean }) {
         {hasUnread ? (
           <Image source={require('@/shared/assets/icons/bell-badge.png')} style={{ width: 28, height: 28 }} />
         ) : (
-          <SvgUri uri={svgAssetUri(require('@/shared/assets/icons-svg/bell.svg'))} width={28} height={28} />
+          <BellSvg width={28} height={28} />
         )}
       </TouchableOpacity>
     </View>
