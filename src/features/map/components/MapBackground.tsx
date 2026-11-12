@@ -48,12 +48,15 @@ export function MapBackground({
   center,
   hospitals,
   selectedId,
+  mapPadding,
   onSelectPin,
 }: {
   mapRef: Ref<NaverMapViewRef>;
   center: { latitude: number; longitude: number } | null;
   hospitals: Hospital[];
   selectedId: number | null;
+  // 위·아래 UI가 지도를 덮는 높이. 카메라 중심이 보이는 영역의 중앙이 되게 한다.
+  mapPadding: { top: number; bottom: number; left: number; right: number };
   onSelectPin: (id: number) => void;
 }) {
   // Client ID가 없으면 초기화 실패 크래시를 막기 위해, center가 없으면(위치 확정 전) initialCamera가
@@ -63,7 +66,7 @@ export function MapBackground({
   }
 
   return (
-    <NaverMapView ref={mapRef} style={{ flex: 1 }} initialCamera={{ ...center, zoom: 15 }}>
+    <NaverMapView ref={mapRef} style={{ flex: 1 }} initialCamera={{ ...center, zoom: 15 }} mapPadding={mapPadding}>
       {hospitals.map((hospital) => (
         <NaverMapMarkerOverlay
           key={hospital.id}
